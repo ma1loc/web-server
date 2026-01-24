@@ -48,6 +48,7 @@
             POLLERR → error occurred
             POLLHUP → connection closed / hang up
             POLLNVAL → invalid fd
+    INADDR_ANY?
 
 /* >>> TODO
     TODO: create listening sockets, for browser listening

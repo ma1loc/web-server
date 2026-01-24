@@ -13,26 +13,28 @@
 # include <poll.h>
 # include <cerrno>
 # include <cstdlib>
+# include <fcntl.h>
 
 # define TIMEOUT 1000
+# define QUEUE_LIMIT 128
 
 class socket_engine {
     private:
-
-        std::vector<struct pollfd> clientFD;
+        std::vector<struct pollfd> poll_fds;
         unsigned short int serv_fds_count;
-        struct sockaddr_in server_addr_in;
-        struct sockaddr_in client_addr_in;
+        unsigned int pool_fds_len;
+        bool is_running;
     public:
-        socket_engine(int port);
-
-        // setters
-        void    set_client_fd(int fd);
+        socket_engine();
         void    set_server_side(int port);
+        void    set_client_side(int fd);
+        void    process_connections(void);
 
-        // getters
-        int     get_clint_fd(int index) const;
-        int     get_server_fd(int index) const;
+        // std::vector<struct pollfd> &get_poll_fds(void);
+
+        unsigned short int  get_serv_fds_count(void) const;
+        unsigned int        get_pool_fds_len(void) const;
 };
+
 
 # endif
