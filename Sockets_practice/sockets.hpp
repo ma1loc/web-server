@@ -13,31 +13,28 @@
 # include <poll.h>
 # include <cerrno>
 # include <cstdlib>
+# include <fcntl.h>
 
 # define TIMEOUT 1000
+# define QUEUE_LIMIT 128
 
 class socket_engine {
     private:
         std::vector<struct pollfd> poll_fds;
         unsigned short int serv_fds_count;
-
+        unsigned int pool_fds_len;
+        bool is_running;
     public:
         socket_engine();
-
-        void    set_client_side(int fd);
         void    set_server_side(int port);
+        void    set_client_side(int fd);
+        void    process_connections(void);
+
+        // std::vector<struct pollfd> &get_poll_fds(void);
+
+        unsigned short int  get_serv_fds_count(void) const;
+        unsigned int        get_pool_fds_len(void) const;
 };
 
-/*
-    i have to handle the server first in every single port is provided and stor-them in std::vector<struct pollfd> poll_fds;
-    info set like this of the server:
-        server_addr_in.sin_family = AF_INET;
-        server_addr_in.sin_port = htons(port);
-        server_addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
-    the client after will be handeld by the set_client_size:
-        new_clientFD.fd = fd;
-        new_clientFD.events = POLLIN; // Tell me when ready to read data from FD
-        // new_clientFD.revents is set by the kernal
-*/ 
 
 # endif
