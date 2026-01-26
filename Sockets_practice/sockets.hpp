@@ -14,9 +14,14 @@
 # include <cerrno>
 # include <cstdlib>
 # include <fcntl.h>
+# include <map>
+# include <netdb.h>
 
 # define TIMEOUT 1000
 # define QUEUE_LIMIT 128
+# define BUFFER_SIZE 1024 // -> size in bytes???
+# define PROTOCOL_TYLE 0
+
 
 class socket_engine {
     private:
@@ -26,8 +31,8 @@ class socket_engine {
         bool is_running;
     public:
         socket_engine();
-        void    set_server_side(int port);
-        void    set_client_side(int fd);
+        void    set_server_side(std::string port);
+        void    set_client_side(unsigned short int fd);
         void    process_connections(void);
 
         // std::vector<struct pollfd> &get_poll_fds(void);
