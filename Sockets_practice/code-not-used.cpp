@@ -105,7 +105,7 @@ while (true) {
     for (int i = 0; i < poll_fds.size(); i++) {
         if (poll_fds[i].revents & POLLIN) {
             
-            if (i < serv_fds_count) { 
+            if (i < serv_fds_count) {
                 // A SERVER triggered!
                 // This is where you call accept()
                 int new_fd = accept(poll_fds[i].fd, ...);
@@ -150,3 +150,85 @@ if (i < serv_fds_count) // It's a server "door"
         this->set_client_side(new_fd); 
     }
 } 
+else { 
+    char buffer[1024];
+    int bytes_received = recv(poll_fds[i].fd, buffer, sizeof(buffer), 0);
+
+    if (bytes_received <= 0) {
+        // If 0, client disconnected. 
+        // If -1, error. 
+        // Action: Close FD and remove from vector.
+    } else {
+        // bytes_received > 0: You have part of an HTTP Request!
+    }
+}
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+struct addrinfo hints, *result;
+
+memset(&hints, 0, sizeof(hints));
+hints.ai_family = AF_INET;       // I want IPv4
+hints.ai_socktype = SOCK_STREAM; // I want TCP
+hints.ai_flags = AI_PASSIVE;    // I want to "Listen" (for bind)
+
+// The Magic Call
+if (getaddrinfo(NULL, "8080", &hints, &result) != 0) {
+    // Handle error...
+}
+
+// Now result->ai_addr is a perfectly prepared structure 
+// that you can pass directly to bind()!
+bind(server_fd, result->ai_addr, result->ai_addrlen);
+
+freeaddrinfo(result); // Don't forget to free the linked list!
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// old addrsocker_in
+    // >>>>>>>>>>>>>>>>>>> this is the old one 'rm_me' <<<<<<<<<<<<<<<<<< //
+    struct sockaddr_in server_addr_in;
+    std::memset(&server_addr_in, 0, sizeof(server_addr_in));
+    // >>> before the bind i have to set the sockaddr_in struct
+    server_addr_in.sin_family = AF_INET;
+    server_addr_in.sin_port = htons(port);
+    server_addr_in.sin_addr.s_addr = INADDR_ANY;
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// 1. Create the socket using the info 'result' gave you
+int sfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol); // DONE
+
+// 2. IMPORTANT: Set O_NONBLOCK (as required by the subject)
+fcntl(sfd, F_SETFL, O_NONBLOCK); // DONE
+
+// 3. Optional but helpful: Allow immediate reuse of the port
+int opt = 1;
+setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+// 4. Bind using the info 'result' gave you
+if (bind(sfd, result->ai_addr, result->ai_addrlen) == 0) {
+    // Success! 
+}
+
+// 5. Cleanup memory immediately after bind
+freeaddrinfo(result);
+
+// >>>>>>>>>>>>>>>>>>>>> old bind() <<<<<<<<<<<<<<<<<<<<<<<<
+int bind_stat = bind(serv_socketFD,
+                 (struct sockaddr *)&server_addr_in,
+                 sizeof(server_addr_in));
+if (bind_stat < 0)
+{
+    std::cerr << "Error: field to bind serv_socketFD fd\n" << errno << std::endl;
+    std::exit(1);
+}
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
