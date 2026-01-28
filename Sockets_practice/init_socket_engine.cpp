@@ -1,18 +1,28 @@
 # include "sockets.hpp"
-# include <sys/socket.h>
+# include "set_logs.hpp"
 
-// 3-DAYS
+# include <iostream>    // rm_me
+
+// 5-DAYS
 
 socket_engine::socket_engine()
 {
     this->serv_fds_count = 0;
     this->pool_fds_len = 0;
-    this->is_running = true;
+    // this->is_running = true;
     std::cout << "socket_engine successfully ready!" << std::endl;
 }
 
+// (DONE[*])
 void socket_engine::set_client_side(unsigned short int fd)
 {
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+    {
+        std::cerr << "Error: fcntl failed: " << strerror(errno) << std::endl;
+        close (fd);
+        return ;
+    }
+
     struct pollfd new_client;
     std::memset(&new_client, 0, sizeof(new_client));
 
@@ -34,7 +44,7 @@ void socket_engine::set_client_side(unsigned short int fd)
 // [*] listen
 // [*] put it into the first slot of my poll_fds vector
 
-// >>> TODO: setup server side listening fd
+// (DONE[*])
 void socket_engine::set_server_side(std::string port)
 {
     int serv_socketFD;
@@ -49,7 +59,7 @@ void socket_engine::set_server_side(std::string port)
     */
     struct addrinfo hints, *result;
     std::memset (&hints, 0, sizeof(hints));
-    std::memset (&result, 0, sizeof(result));
+    // std::memset (&result, 0, sizeof(result));
     std::memset(&new_server, 0, sizeof(new_server));
 
 
@@ -90,6 +100,7 @@ void socket_engine::set_server_side(std::string port)
     if (serv_socketFD < 0)
     {
         std::cerr << "Error: Can't open server FD\n" << errno << std::endl;
+        freeaddrinfo(result);
         std::exit(1);
     }
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -104,12 +115,30 @@ void socket_engine::set_server_side(std::string port)
         TOKNOW:
             kernal give a defult TIME_WAIT after port has ben used free
             the statement ignore that
-        SOL_SOCKET -> ???
-    */
-    // TEST: whithout SO_REUSEADDR -> Address already in use.
-    int optval = 1; // >>> ???
-    setsockopt(serv_socketFD, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+        SOL_SOCKET -> socket_level -> tell the kernal opetions will set in the socket level
 
+        >>> NEED TO KNOW:
+        OSI Layer 7 — Application (http)
+        OSI Layer 6 — Presentation (extansion, compres ,encripte(plaintext))
+        OSI Layer 5 — Session (????)
+        -------------------------
+        Sockets API  ← (interface / boundary)
+        -------------------------
+        OSI Layer 4 — Transport (TCP / UDP)
+        OSI Layer 3 — Network (IP)
+        OSI Layer 2 — Data Link
+        OSI Layer 1 — Physical
+
+        Sockets here is the way of the Application layer(layer 7, 6, 5) will communicate
+        with the next transport layer
+    */
+
+    // TEST: whithout SO_REUSEADDR -> Address already in use.
+    int opt = 1;
+    if (setsockopt(serv_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        std::cerr << "setsockopt failed: " << strerror(errno) << std::endl;
+        exit(1);
+    }
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     // TODO: fcntl():
@@ -129,7 +158,8 @@ void socket_engine::set_server_side(std::string port)
     int fcntl_stat = fcntl(serv_socketFD, F_SETFL, O_NONBLOCK);
     if (fcntl_stat < 0)
     {
-        std::cerr << "Error: Can't Perform 'fcntl()' to provided FD\n" << errno << std::endl;
+        std::cerr << "Error: fcntl failed: " << strerror(errno) << std::endl;
+        freeaddrinfo(result);
         std::exit(1);
     }
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -144,7 +174,9 @@ void socket_engine::set_server_side(std::string port)
     int bind_stat = bind(serv_socketFD, result->ai_addr, result->ai_addrlen);
     if (bind_stat < 0)
     {
-        std::cerr << "Error: field to bind serv_socketFD fd\n" << errno << std::endl;
+        std::cerr << ">>> Error: field to bind serv_socketFD: " << strerror(errno) << std::endl;
+        freeaddrinfo(result);
+        close (serv_socketFD);
         std::exit(1);
     }
 
@@ -190,6 +222,18 @@ unsigned int socket_engine::get_pool_fds_len(void) const {
 
 // ----------------------------------------------------------------------------------------------------------- //
 
+void socket_engine::free_poll_fds(void)
+{
+    std::cout << "poll_fds.size() -> " << poll_fds.size() << std::endl;
+    for (unsigned long i = 0; i < poll_fds.size(); i++)
+    {
+        std::cout << "free the #" << i << "poll_fds.size() -> " << poll_fds.size() << std::endl;
+        close(poll_fds.at(i).fd);
+    }    
+}
+
+// ----------------------------------------------------------------------------------------------------------- //
+
 /* TODO: process connections -> poll(), accept(), resv(), send()
     SYNTAX: int accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len);
     accept return -> file descriptor of the accepted socket (for the accepted client socket)
@@ -210,23 +254,39 @@ unsigned int socket_engine::get_pool_fds_len(void) const {
 
 */
 
-// multiplexer I/O
+// GET (DONE[ ])
+// POST (DONE[ ])
+// DELETE (DONE[ ])
+
+/*
+    I/O Multiplexing -> is a problem of the server to serve multiple client
+
+    poll() -> is a 'checklist method' that gives the kernal a list of 'struct pollfd'
+        with info for every single one (fd, 'events -> is the kernal action he wait for')
+        and poll wait intel the kernal see an action of the spesifect event you give
+        if there's a event with fd the kernal just set the revent for you
+    return:
+        '-1'    -> error;
+        '>0'    -> how many fds are ready;
+        '0'     -> timeout;
+    
+*/
 void socket_engine::process_connections(void)
 {
-    int poll_stat = 0;
     std::map<int, std::string> package_statement;
 
-    while (this->is_running) 
+    // >>> main loop will exist just in one case of signal
+    while (true)
     {
         // poll_fds.data() -> 
-        poll_stat = poll(poll_fds.data(), poll_fds.size(), 1000);
-        if (poll_stat < 0)
+        int poll_stat = poll(poll_fds.data(), poll_fds.size(), 1000);
+        poll_logs(poll_stat);
+        if (poll_stat < 0 && errno == EINTR)
         {
-            std::cerr << "Error: poll field to watch sockets\n" << errno << std::endl;
-            std::exit(1);
+            std::cout << "sigggggggggggggggggggggggggggg" << std::endl;
         }
 
-        // TOKNOW: will check every fds in poll_fds even server or client?
+        // TOKNOW: will check every fds in poll_fds vector even server or client?
         for (unsigned long i = 0; i < poll_fds.size(); i++)
         {
             if (poll_fds.at(i).revents & POLLIN)    // client
@@ -239,6 +299,8 @@ void socket_engine::process_connections(void)
                 if (i < serv_fds_count) // >>> server FD
                 {
                     struct sockaddr_in client_addr;
+
+                    //  TODO: use the getaddrinfo()
                     std::memset(&client_addr, 0, sizeof(client_addr));
                     socklen_t client_len = sizeof(client_addr);
 
@@ -250,7 +312,8 @@ void socket_engine::process_connections(void)
                     int fcntl_stat = fcntl(new_fd, F_SETFL, O_NONBLOCK);
                     if (fcntl_stat < 0)
                     {
-                        std::cerr << "Error: Can't Perform 'fcntl()' to provided FD\n" << errno << std::endl;
+                        std::cerr << "Error: fcntl failed: " << strerror(errno) << std::endl;
+                        close (new_fd);
                         std::exit(1);
                     }
                     this->set_client_side(new_fd);
@@ -277,18 +340,24 @@ void socket_engine::process_connections(void)
                     ssize_t bytes_received = recv(poll_fds.at(i).fd, buffer, sizeof(buffer), 0);
                     if (bytes_received <= 0)
                         std::cerr << errno << std::endl;
+                    //
+
+
                     else if (bytes_received > 0) // thers's
                     {}
                     // if condition will check if there's more data to resv
                     /*
                         what i will don't know is 
                     */
-                    if (bytes_received < 0) //
+                    if (bytes_received == 0) {  // >>> Case client disconnected by sending (FIN)
+                        close (poll_fds.at(i).fd);
+                        poll_fds.erase(poll_fds.begin() + i);
+                    }
                 }
             }
-            std::cout << "say hey form for loop" << std::endl;
+            // std::cout << "say hey form for loop" << std::endl;
         }
-        std::cout << "say hey form while loop" << std::endl;
+        // std::cout << "say hey form while loop" << std::endl;
     }
 }
 

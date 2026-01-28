@@ -225,7 +225,30 @@ if (bind_stat < 0)
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+void socket_engine::set_client_side(int fd) // Use int for FDs, not unsigned short
+{
+    // MANDATORY: Set the client socket to non-blocking
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
+        std::cerr << "Error: fcntl on client FD failed" << std::endl;
+        close(fd);
+        return;
+    }
+
+    struct pollfd new_client;
+    std::memset(&new_client, 0, sizeof(new_client));
+
+    new_client.fd = fd;
+    new_client.events = POLLIN; 
+
+    poll_fds.push_back(new_client);
+    pool_fds_len++;
+}
+
+EINTR
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
