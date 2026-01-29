@@ -3,6 +3,6 @@
 
 # include <iostream>
 
-void    poll_logs(int poll_stat);
+void    epoll_logs(int poll_stat);
 
 # endif
