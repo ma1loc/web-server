@@ -5,7 +5,7 @@ socket_engine s_engine;
 
 void signal_handler(int sig) {
     std::cout << "Interrupt handle " << sig << std::endl;
-    s_engine.free_poll_fds();
+    // s_engine.free_poll_fds();
     exit(sig);
 }
 
@@ -17,7 +17,9 @@ int main()
     s_engine.set_server_side("8080");
     s_engine.set_server_side("9090");
     
-    s_engine.process_connections();
+    s_engine.free_fds_list();
+
+    // s_engine.process_connections();  
 
     return (0);
 }

@@ -24,4 +24,3 @@ void    process_connections()
         {}
     }
 }
-

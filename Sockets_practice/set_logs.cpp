@@ -1,18 +1,18 @@
 # include "set_logs.hpp"
 # include "sockets.hpp"
 
-void poll_logs(int poll_stat)
+void epoll_logs(int epoll_stat)
 {
-    if (poll_stat == 0)
+    if (epoll_stat == 0)
     {
-        std::cout << "LOGS: poll timeout " << TIMEOUT << "ms" << std::endl;
+        std::cout << "LOGS: poll timeout " << TIMEOUT << "ms " << strerror(errno) << std::endl;
     }
-    else if (poll_stat > 0)
+    else if (epoll_stat > 0)
     {
-        std::cout << "LOGS: poll found " << poll_stat << " ready fd(s)" << std::endl;
+        std::cout << "LOGS: poll found " << epoll_stat << " ready fd(s): "  << strerror(errno) << std::endl;
     }
     else
     {
-        std::cerr << "LOGS: poll error" << std::endl;
+        std::cerr << "LOGS: poll error: "  << strerror(errno) << std::endl;
     }
 }

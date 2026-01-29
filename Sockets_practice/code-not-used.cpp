@@ -248,9 +248,29 @@ EINTR
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+while (true) {
+    // epoll_wait only tells you about ACTIVE events
+    int num_ready = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 
+    for (int i = 0; i < num_ready; i++) { // <--- The "Light" Loop
+        // This loop ONLY touches active connections.
+        int fd = events[i].data.fd; 
+        // Handle it immediately!
+    }
+}
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+int fd = events[i].data.fd; // The FD that just woke up
+
+// Is this FD in my "Server List"?
+if (std::find(server_fds.begin(), server_fds.end(), fd) != server_fds.end()) {
+    // MATCH! It's a server.
+    // Logic: accept() a new client.
+} else {
+    // NO MATCH! It's an existing client.
+    // Logic: recv() data.
+}
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
