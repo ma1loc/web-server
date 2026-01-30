@@ -274,4 +274,99 @@ if (std::find(server_fds.begin(), server_fds.end(), fd) != server_fds.end()) {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+void socket_engine::process_connections(void)
+{
+    std::map<int, std::string> package_statement;
+
+    // >>> main loop will exist just in one case of signal
+    while (true)
+    {
+        // --------------------------- old ----------------------------------- //
+        // int poll_stat = poll(poll_fds.data(), poll_fds.size(), 1000);
+        // poll_logs(poll_stat);
+        // --------------------------- new ----------------------------------- //
+        // STOP_HERE //
+        int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
+        epoll_logs(epoll_stat);
+
+        // ------------------------------------------------------------------- //
+
+
+        // TOKNOW: will check every fds in poll_fds vector even server or client?
+        for (unsigned long i = 0; i < poll_fds.size(); i++)
+        {
+            if (poll_fds.at(i).revents & POLLIN)    // client
+            {
+                /*
+                    check if it's a server or client
+                        server -> accept()
+                        client -> resv()
+                */
+                if (i < serv_fds_count) // >>> server FD
+                {
+                    struct sockaddr_in client_addr;
+
+                    //  TODO: use the getaddrinfo()
+                    std::memset(&client_addr, 0, sizeof(client_addr));
+                    socklen_t client_len = sizeof(client_addr);
+
+                    // CASE: client's internet cuts out exactly at the moment they try to connect,
+                    int new_fd = accept(poll_fds.at(i).fd, (struct sockaddr *)&client_addr, &client_len);
+                    if (new_fd == -1)
+                        continue ;
+                    
+                    int fcntl_stat = fcntl(new_fd, F_SETFL, O_NONBLOCK);
+                    if (fcntl_stat < 0)
+                    {
+                        std::cerr << "Error: fcntl failed: " << strerror(errno) << std::endl;
+                        close (new_fd);
+                        std::exit(1);
+                    }
+                    this->set_client_side(new_fd);
+                } else {    // >>> client FD
+                    // TODO: use the resv() function to get the client request
+                    // here i will hae to read the request the client send() using the resv()?
+                    /* 
+                        TOKNOW: client request size is unknown, will use a static size buffer
+                        >>> is i have to done the parsing of what i read from request here?
+                        >>> to get end of the header just check four reading char -> '\r\n\r\n'
+                        if you reading some thing else after the '\r\n\r\n' that a body
+                        >>> NOTE: will using the std::map<int, std::string> here.
+                    */
+
+                    char buffer[BUFFER_SIZE];
+                    /*
+                        TOKNOW: recv last flag param is for the FD behaver, 0 -> defult behaver used
+                        every single socket created has it's own kernal buffer
+                        >>> the client just send a TCP segments each time and the recv take each time a sigment
+                        the sigment size based on the network bandwith?
+                        every TCP segments kernal recv will append to the old segments in kernal queue?
+                    */
+
+                    ssize_t bytes_received = recv(poll_fds.at(i).fd, buffer, sizeof(buffer), 0);
+                    if (bytes_received <= 0)
+                        std::cerr << errno << std::endl;
+                    //
+
+
+                    else if (bytes_received > 0) // thers's
+                    {}
+                    // if condition will check if there's more data to resv
+                    /*
+                        what i will don't know is 
+                    */
+                    if (bytes_received == 0) {  // >>> Case client disconnected by sending (FIN)
+                        close (poll_fds.at(i).fd);
+                        poll_fds.erase(poll_fds.begin() + i);
+                    }
+                }
+            }
+            // std::cout << "say hey form for loop" << std::endl;
+        }
+        // std::cout << "say hey form while loop" << std::endl;
+    }
+}
+
+
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
