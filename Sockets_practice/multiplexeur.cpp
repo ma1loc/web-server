@@ -2,6 +2,7 @@
 # include "set_logs.hpp"
 # include <iterator>
 # include <algorithm>
+# include <sys/stat.h>
 
 /* TODO: process connections -> poll(), accept(), resv(), send()
     SYNTAX: int accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len);
@@ -44,27 +45,51 @@
     
 */
 
+void socket_engine::remove_fd_from_list(int fd)
+{
+
+    std::cout << "--------------------------------------------------------------" << std::endl;
+    std::cout << "[>] list befor" << std::endl;
+    for (size_t i = 0; i < fds_list.size(); i++)
+    {
+        std::cout << "fd=" << fds_list.at(i) << " ";
+    }
+    std::cout << "\n";
+
+    std::vector<int>::iterator fd_position = std::find(fds_list.begin(), fds_list.end(), fd);
+    if (fd_position != fds_list.end())
+        fds_list.erase(fd_position);
+
+
+    std::cout << "[>] list after" << std::endl;
+    for (size_t i = 0; i < fds_list.size(); i++)
+    {
+        std::cout << "fd=" << fds_list.at(i) << " ";
+    }
+    std::cout << "\n";
+
+    std::cout << "--------------------------------------------------------------" << std::endl;
+}
+
 void socket_engine::process_connections(void)
 {
     // >>> main loop will exist just in one case of signal
-    while (true)
-    {
+    while (true) {
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
         epoll_logs(epoll_stat);
 
         std::cout << "[>] epoll return -> " << epoll_stat << std::endl;
 
         // ------------------------------------------------------------------- //
-        for (int i = 0; i < epoll_stat; i++)
-        {
+        for (int i = 0; i < epoll_stat; i++) {
+
             // access the fds of the active sockets
             int fd = events[i].data.fd;
 
             // know i have the fd but i have to know if it's for server/clietn side
             std::vector<int>::iterator is_server = std::find(server_side_fds.begin(), server_side_fds.end(), fd);
             
-            // Server side 
-            if (is_server != server_side_fds.end()) {
+            if (is_server != server_side_fds.end()) { // Server side 
                 std::cout << "[>] Request incoming from Server FD: " << fd << std::endl;
 
                 // accept is like a captuer of the client fds
@@ -120,8 +145,19 @@ void socket_engine::process_connections(void)
 
                             // ------------------------------------------------------------------ //
 
-                            // TODO: make the response
-                            // send();
+                            /*  TODO: make the response
+                                1# check if the path exist '../etc/passwod'
+                                2# check if accessable too nahhhhhhhhhhhhhh yep fU*
+                            */
+                            std::string full_path = "www" + path;
+                            struct stat statbuf;
+                            int stat_stat = stat(full_path.c_str(), &statbuf);
+                            if (stat_stat == -1) {  // here will serving the 404.html by defult
+                                std::cout << "[LOG] The requested URL " << path << "was not found on this server." << std::endl;
+                            } else {    // will check the file is accessble too
+                                std::cout << "FFFFFFFFFFFFFFFFFFFFFILE NOT EXIST" << std::endl;
+                                
+                            }
                         }
                         else if (package_statement[fd].compare(0, 4, "POST")) {
                             std::cout << "[>] We get POST request [<]" << std::endl;
@@ -140,6 +176,7 @@ void socket_engine::process_connections(void)
                     // here i have to remove the clietn form the fd list and close it's fd 
                     close (fd);
                     package_statement.erase(fd);
+                    remove_fd_from_list(fd);
                     std::cout << "[!] Client lost connection: " << strerror(errno) << std::endl;
                 }
                 else

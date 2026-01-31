@@ -40,11 +40,11 @@ class socket_engine {
         void    process_connections(void);
 
         void    set_fds_list(int fd);
+        void    remove_fd_from_list(int fd);
         void    free_fds_list(void);
 
         void    set_server_side_fds(int s_fd);
         std::vector<int>    get_server_side_fds(void);
 };
-
 
 # endif
