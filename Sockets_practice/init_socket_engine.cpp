@@ -19,28 +19,30 @@ socket_engine::socket_engine()
 }
 
 // (DONE[*])
-void socket_engine::set_client_side(unsigned short int fd)
+void socket_engine::set_client_side(int fd)
 {
-    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-    {
-        std::cerr << "Error: fcntl failed: " << strerror(errno) << std::endl;
-        close (fd);
-        return ;
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
+        close(fd);
+        std::cerr << "[-] fcntl error on fd " << fd << ": " << strerror(errno) << std::endl;
+        return;
     }
-    struct epoll_event new_client_ev;
-    std::memset(&new_client_ev, 0, sizeof(new_client_ev));
 
-    new_client_ev.data.fd = fd;
-    new_client_ev.events = EPOLLIN; // Tell me when ready to read data from FD
+    struct epoll_event ev;
 
-    // epoll_fd -> table fd
-    // EPOLL_CTL_ADD -> Add an entry to the interest list of the epoll file descriptor
-    // fd -> new fd to add in the table
-    // ev -> ???
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &new_client_ev) < 0)
-    {
-        std::cerr << "Error: epoll_ctl failed: " << strerror(errno) << std::endl;
-        exit(1);
+    std::memset(&ev, 0, sizeof(ev));
+    ev.data.fd = fd;
+    ev.events = EPOLLIN; // Tell me when ready to read data from FD
+
+    /*
+        epoll_fd -> table fd
+        EPOLL_CTL_ADD -> Add an entry to the interest list of the epoll file descriptor
+        fd -> new fd to add in the table
+        ev -> fd infos
+    */
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) < 0) {
+        close (fd);
+        std::cerr << "[-] epoll_ctl error on fd " << fd << ": " << strerror(errno) << std::endl;
+        return ;
     }
     set_fds_list(fd);
 }

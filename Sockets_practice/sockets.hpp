@@ -31,11 +31,12 @@ class socket_engine {
         struct epoll_event events[MAX_EVENTS];
         std::vector<int> server_side_fds;   // >>> backup for the server socket fds
         std::vector<int> fds_list;  // >>> backup for all the fds used to free them in case of SIGINT
+        std::map<int, std::string> package_statement; // >>> raw data stored in 'package_statement' based on it's fd
 
     public:
         socket_engine();
         void    set_server_side(std::string port);
-        void    set_client_side(unsigned short int fd);
+        void    set_client_side(int fd);
         void    process_connections(void);
 
         void    set_fds_list(int fd);

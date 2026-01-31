@@ -9,18 +9,18 @@
     timeout -> how long poll() waits
 */
 
-void    process_connections()
-{
-    std::vector<struct pollfd> &fds = s_engine.get_poll_fds();
-    while (true)
-    {
-        int poll_stat = 0;
-        poll_stat = poll(fds.data(), fds.size(), TIMEOUT);
-        if (poll_stat < 0) {
-            std::cerr << "Error: poll field to watch sockets\n" << errno << std::endl;
-            std::exit(1);
-        }
-        for (int i = 0; i < fds.size(), i++)
-        {}
-    }
-}
+// void    process_connections()
+// {
+//     std::vector<struct pollfd> &fds = s_engine.get_poll_fds();
+//     while (true)
+//     {
+//         int poll_stat = 0;
+//         poll_stat = poll(fds.data(), fds.size(), TIMEOUT);
+//         if (poll_stat < 0) {
+//             std::cerr << "Error: poll field to watch sockets\n" << errno << std::endl;
+//             std::exit(1);
+//         }
+//         for (int i = 0; i < fds.size(), i++)
+//         {}
+//     }
+// }

@@ -370,3 +370,41 @@ void socket_engine::process_connections(void)
 
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+else // This is a CLIENT FD triggered by EPOLLIN
+{
+    char buffer[1024]; // A small bucket to catch the data
+    std::memset(buffer, 0, sizeof(buffer));
+
+    int bytes_received = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
+    if (bytes_received > 0) 
+    {
+        // 1. Success! We got data.
+        std::cout << "[+] Received " << bytes_received << " bytes from fd " << fd << std::endl;
+        std::cout << "--- DATA START ---\n" << buffer << "\n--- DATA END ---" << std::endl;
+        
+        // TODO: This is where you'd append to your package_statement map
+        // package_statement[fd] += buffer;
+    } 
+    else if (bytes_received == 0) 
+    {
+        // 2. Client hung up (Connection closed)
+        std::cout << "[!] Client on fd " << fd << " disconnected." << std::endl;
+        
+        // IMPORTANT: Clean up!
+        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+        close(fd);
+        // Remove from your tracking lists if necessary
+    } 
+    else 
+    {
+        // 3. Error occurred
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Nothing to read right now, just ignore.
+        } else {
+            std::cerr << "[-] Recv error on fd " << fd << ": " << strerror(errno) << std::endl;
+            close(fd);
+        }
+    }
+}

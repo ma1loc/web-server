@@ -46,17 +46,15 @@
 
 void socket_engine::process_connections(void)
 {
-    std::map<int, std::string> package_statement;
-
     // >>> main loop will exist just in one case of signal
     while (true)
     {
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
         epoll_logs(epoll_stat);
 
-        // ------------------------------------------------------------------- //
+        std::cout << "[>] epoll return -> " << epoll_stat << std::endl;
 
-        std::cout << "epoll return -> " << epoll_stat << std::endl;
+        // ------------------------------------------------------------------- //
         for (int i = 0; i < epoll_stat; i++)
         {
             // access the fds of the active sockets
@@ -64,13 +62,89 @@ void socket_engine::process_connections(void)
 
             // know i have the fd but i have to know if it's for server/clietn side
             std::vector<int>::iterator is_server = std::find(server_side_fds.begin(), server_side_fds.end(), fd);
-            if (is_server != server_side_fds.end())   // server side
-            {
-                std::cout << "+ >>> " << fd << " is a SERVER" << std::endl;
+            
+            // Server side 
+            if (is_server != server_side_fds.end()) {
+                std::cout << "[>] Request incoming from Server FD: " << fd << std::endl;
+
+                // accept is like a captuer of the client fds
+                int client_fd = accept(fd, NULL, NULL);
+                if (client_fd != -1)
+                    set_client_side(client_fd);
+                else {
+                    /*TOKNOW:
+                        accept return -1 in case of fd giving have no data yet
+                        -1 mean's a lot in case of non-blocking, and is not an error.
+                        errno will solve the -1 mean's an error of just the fd not ready yet
+                        if errno == EAGAIN -> mean's the client_fd has no data yet in the kernal table
+                        if errno == EWOULDBLOCK -> same as the EAGAIN just about the 
+                    */
+                    if (errno != EAGAIN && errno != EWOULDBLOCK)
+                        std::cout << "[!] Accept error: "<< strerror(errno) << std::endl;
+                }
             }
-            else
+            else    // Client side
             {
-                std::cout << "- >>> " << fd << " is a CLIENT" << std::endl;
+                std::cout << "[>] Data incoming from Client FD: " << fd << std::endl;
+
+                char raw_buffer[BUFFER_SIZE];
+                std::memset(raw_buffer, 0, sizeof(raw_buffer));
+
+                int recv_stat = recv(fd, raw_buffer, BUFFER_SIZE, 0);
+                std::cout << "[+] Received " << recv_stat << " bytes from fd " << fd << std::endl;
+
+
+                if (recv_stat > 0) {
+                    package_statement[fd].append(raw_buffer, recv_stat);
+                    std::cout << "[+] Received " << recv_stat << " bytes from fd " << fd << std::endl;
+                    std::cout << "--- DATA START ---\n" << package_statement[fd] << "\n--- DATA END ---" << std::endl;
+
+                    /*  WILL CHECK IF END OF THE REQUSER
+                        - if the package_statement[i] fully recv, if yes, will done the response
+                        - check the methode of the request
+                        - check the end of header request \r\n\r\n
+                    */
+
+                    // TOKNOW Content-Length header indicates the size of the message body
+                    if (package_statement[fd].find("\r\n\r\n") != std::string::npos)
+                    {
+                        std::cout << "[>] We get the \\r\\n\\r\\n [<]" << std::endl;
+                        if (package_statement[fd].compare(0, 3, "GET") == 0) {
+                            std::cout << "[>] We get GET request [<]" << std::endl;
+
+                            // ------------------------- HARDCODED VALUES ------------------------ //
+                            // GET /index.html HTTP/1.1
+                            std::string method = "GET";
+                            std::string path = "/index.html";
+                            std::string version = "HTTP/1.1";
+
+                            // ------------------------------------------------------------------ //
+
+                            // TODO: make the response
+                            // send();
+                        }
+                        else if (package_statement[fd].compare(0, 4, "POST")) {
+                            std::cout << "[>] We get POST request [<]" << std::endl;
+                            // here will check the content-lenght in the header 
+                        }
+                        else if (package_statement[fd].compare(0, 6, "DELETE")) {
+                            std::cout << "[>] We get DELETE request [<]" << std::endl;
+                        }
+                    }
+
+                    // TOKNOW: parsing of the request will needed here ()
+                }
+
+
+                else if (recv_stat == 0) {
+                    // here i have to remove the clietn form the fd list and close it's fd 
+                    close (fd);
+                    package_statement.erase(fd);
+                    std::cout << "[!] Client lost connection: " << strerror(errno) << std::endl;
+                }
+                else
+                    std::cerr << "[-] recv error on fd " << events[i].data.fd << ": " << strerror(errno) << std::endl;
+
             }
         }
     }
