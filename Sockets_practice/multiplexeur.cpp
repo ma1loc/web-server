@@ -121,7 +121,6 @@ void socket_engine::process_connections(void)
 
                 if (recv_stat > 0) {
                     package_statement[fd].append(raw_buffer, recv_stat);
-                    std::cout << "[+] Received " << recv_stat << " bytes from fd " << fd << std::endl;
                     std::cout << "--- DATA START ---\n" << package_statement[fd] << "\n--- DATA END ---" << std::endl;
 
                     /*  WILL CHECK IF END OF THE REQUSER
@@ -142,22 +141,45 @@ void socket_engine::process_connections(void)
                             std::string method = "GET";
                             std::string path = "/index.html";
                             std::string version = "HTTP/1.1";
-
+                            int status_code = 200;
+                            struct stat statbuf;
                             // ------------------------------------------------------------------ //
 
                             /*  TODO: make the response
-                                1# check if the path exist '../etc/passwod'
-                                2# check if accessable too nahhhhhhhhhhhhhh yep fU*
+                                1# >>> [] check if the path exist '../etc/passwod'
+                                2# >>> [] check if accessable too nahhhhhhhhhhhhhh yep fU*
+                                3# >>> [] we must use the root: path in the config file
+                                4# >>> [] apply status code in case of error, not found
+                                5# >>> [] Permission denied (HTTP 403 Forbidden)
+                                6# >>> [] check provided root and index in exist and prem
+                                7# >>> [] i have to get the index in the "locatoin /"
+                                        config file (case of multiple source in index)
                             */
+                            if (path == "/")
+                                path = "/index.html";
                             std::string full_path = "www" + path;
-                            struct stat statbuf;
-                            int stat_stat = stat(full_path.c_str(), &statbuf);
-                            if (stat_stat == -1) {  // here will serving the 404.html by defult
-                                std::cout << "[LOG] The requested URL " << path << "was not found on this server." << std::endl;
-                            } else {    // will check the file is accessble too
-                                std::cout << "FFFFFFFFFFFFFFFFFFFFFILE NOT EXIST" << std::endl;
-                                
+                            
+                            // >>> redirections <<<
+                            if (stat(full_path.c_str(), &statbuf) < 0) {
+                                std::cout << "[LOG] The requested URL " << path << " was not found on this server." << std::endl;
+                                full_path = "www/not-found.html";
+                                status_code = 404;
                             }
+                            else if (access(full_path.c_str(), F_OK | R_OK) < 0) {
+                                std::cout << "[LOG] The requested URL " << path << " is forbidden to access to." << std::endl;
+                                full_path = "www/forbidden.html";
+                                status_code = 403;
+                            }
+                            else if (S_ISDIR(statbuf.st_mode)) {
+                                full_path += "/index.html";
+                                if (access(full_path.c_str(), F_OK | R_OK) < 0) {
+                                    std::cout << "[LOG] The requested URL " << path << " is forbidden to access to." << std::endl;
+                                    full_path = "www/forbidden.html";
+                                    status_code = 403;
+                                }
+                            }
+                            // >>> request handling <<<
+
                         }
                         else if (package_statement[fd].compare(0, 4, "POST")) {
                             std::cout << "[>] We get POST request [<]" << std::endl;

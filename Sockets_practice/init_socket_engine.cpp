@@ -1,6 +1,6 @@
 # include "sockets.hpp"
 
-// 6-DAYS
+// 7-DAYS
 
 socket_engine::socket_engine()
 {
