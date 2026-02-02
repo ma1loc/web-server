@@ -1,7 +1,7 @@
 to done
 -> using addrinfo insted of sockaddr_in
 -> Virtual Hosting, not req?
-
+-> [2026-01-30] New connection from 192.168.1.15 on port 8080
 
 
 subject say:
