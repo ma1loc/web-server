@@ -1,5 +1,10 @@
-# ifndef SOCKETS_HPP
-# define SOCKETS_HPP
+# ifndef SOCKET_ENGINE_HPP
+# define SOCKET_ENGINE_HPP
+
+# include <sys/epoll.h>
+# include <string>
+# include <vector>
+# include <map>
 
 # include <sys/types.h>
 # include <sys/socket.h>
@@ -8,21 +13,17 @@
 # include <unistd.h>
 # include <cstring>
 # include <stdint.h>
-# include <vector>
 # include <cerrno>
 # include <cstdlib>
 # include <fcntl.h>
 # include <netdb.h>
-# include <sys/epoll.h>
-# include <map>
-
 # include <iostream>
+# include <algorithm>
 
 # define TIMEOUT 1000
 # define QUEUE_LIMIT 128
-# define BUFFER_SIZE 1024 // -> size in bytes
+# define BUFFER_SIZE 1024
 # define PROTOCOL_TYLE 0
-
 # define MAX_EVENTS 64
 
 class socket_engine {
@@ -35,8 +36,10 @@ class socket_engine {
 
     public:
         socket_engine();
-        void    set_server_side(std::string port);
-        void    set_client_side(int fd);
+        void    init_client_side(int fd);
+        void    init_server_side(std::string port, std::string host);
+
+        // ---------------------------------------------- //
         void    process_connections(void);
 
         void    set_fds_list(int fd);
@@ -46,5 +49,8 @@ class socket_engine {
         void    set_server_side_fds(int s_fd);
         std::vector<int>    get_server_side_fds(void);
 };
+
+// std::string get();
+void    server_event(int fd);
 
 # endif
