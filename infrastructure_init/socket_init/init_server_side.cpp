@@ -11,39 +11,43 @@ void socket_engine::init_server_side(std::string port, std::string host)
     std::memset(&new_server_ev, 0, sizeof(new_server_ev));
     std::memset (&hints, 0, sizeof(hints));
 
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_protocol = PROTOCOL_TYLE;
+    hints.ai_family = AF_INET;          // IPv
+    hints.ai_socktype = SOCK_STREAM;    // T/U
+    hints.ai_flags = AI_PASSIVE;        // listen mode
+    hints.ai_protocol = PROTOCOL_TYLE;  // defult  protocol (TCP/IP)
 
     if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0)
     {
-        // TODO-CHECK: LEAKKKKKKKKKKKKKKKKKKKKK
         std::cerr << "[-] Error: 'getaddrinfo' failed: " << strerror(errno) << std::endl;
-        exit(1);
+        free_fds_list();
+        std::exit(1);
     }
 
     serv_socketFD = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (serv_socketFD < 0)
     {
         std::cerr << "[-] Error: 'socket' failed: " << strerror(errno) << std::endl;
+        free_fds_list();
         freeaddrinfo(result);
         std::exit(1);
     }
 
     new_server_ev.data.fd = serv_socketFD;
-    new_server_ev.events = EPOLLIN;
+    new_server_ev.events = EPOLLIN;     // based on incomming
 
     int opt = 1;
     if (setsockopt(serv_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         std::cerr << "[-] Error: 'setsockopt' failed: " << strerror(errno) << std::endl;
+        free_fds_list();
         close(serv_socketFD);
+        freeaddrinfo(result);
         std::exit(1);
     }
     if (fcntl(serv_socketFD, F_SETFL, O_NONBLOCK) < 0)
     {
         std::cerr << "[-] Error: 'fcntl' failed: " << strerror(errno) << std::endl;
         freeaddrinfo(result);
+        free_fds_list();
         close(serv_socketFD);
         std::exit(1);
     }
@@ -51,12 +55,15 @@ void socket_engine::init_server_side(std::string port, std::string host)
     {
         std::cerr << "[-] Error: 'bind' failed: " << strerror(errno) << std::endl;
         freeaddrinfo(result);
+        free_fds_list();
         close (serv_socketFD);
         std::exit(1);
     }
     if (listen(serv_socketFD, QUEUE_LIMIT) < 0)
     {
         std::cerr << "[-] Error: listen failed: " << strerror(errno) << std::endl;
+        free_fds_list();
+        freeaddrinfo(result);
         close(serv_socketFD);
         std::exit(1);
     }
@@ -64,6 +71,8 @@ void socket_engine::init_server_side(std::string port, std::string host)
     {
         std::cerr << "[-] Error: 'epoll_ctl' failed: " << strerror(errno) << std::endl;
         close(serv_socketFD);
+        freeaddrinfo(result);
+        free_fds_list();
         std::exit(1);
     }
 

@@ -20,11 +20,39 @@
 # include <iostream>
 # include <algorithm>
 
+# include "multiplexeur/request.hpp"
+# include "multiplexeur/response.hpp"
+
 # define TIMEOUT 1000
 # define QUEUE_LIMIT 128
 # define BUFFER_SIZE 1024
 # define PROTOCOL_TYLE 0
 # define MAX_EVENTS 64
+
+// -- HARDCODED VALUES --
+// -------------------------------------------------------
+// >>> server-level
+    // std::string listen = "8080";
+    // std::string host = "localhost";
+    // std::string client_max_body_size = "3000000";
+    // std::string error_page = "error_pages/404.html"; 
+    // // std::string index = "index.html";
+
+    // // >>> location-level
+    //     std::string root = "/";
+    //     std::string autoindex = "on";
+    //     // std::string autoindex = "off";
+    //     std::string index = "index.html";
+    //     std::string allow_methods = "GET";
+// -------------------------------------------------------
+
+struct client
+{
+    request req;
+    response res;
+    bool req_ready;
+};
+
 
 class socket_engine {
     private:
@@ -32,7 +60,8 @@ class socket_engine {
         struct epoll_event events[MAX_EVENTS];
         std::vector<int> server_side_fds;   // >>> backup for the server socket fds
         std::vector<int> fds_list;  // >>> backup for all the fds used to free them in case of SIGINT
-        std::map<int, std::string> package_statement; // >>> raw data stored in 'package_statement' based on it's fd
+        
+        std::map<int, client> raw_client_data; // >>> raw request data stored in
 
     public:
         socket_engine();
@@ -49,8 +78,5 @@ class socket_engine {
         void    set_server_side_fds(int s_fd);
         std::vector<int>    get_server_side_fds(void);
 };
-
-// std::string get();
-void    server_event(int fd);
 
 # endif

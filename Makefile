@@ -5,7 +5,7 @@ CPP_FLAGS = -Wall -Wextra -Werror #-fsanitize=address
 NAME = webserv
 SRC = ./main.cpp ./infrastructure_init/socket_init/init_socket_engine.cpp ./infrastructure_init/socket_init/init_client_side.cpp \
 		./infrastructure_init/socket_init/init_server_side.cpp ./infrastructure_init/multiplexeur/multiplexeur.cpp \
-		./infrastructure_init/multiplexeur/utils.cpp
+		./infrastructure_init/multiplexeur/utils.cpp #./infrastructure_init/methodes/get.cpp 
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)

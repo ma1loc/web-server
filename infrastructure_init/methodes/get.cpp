@@ -1,14 +1,6 @@
 # include "../socket_engine.hpp"
 # include <sys/stat.h>
 
-// GET /index.html HTTP/1.1
-// ------------------------- HARDCODED VALUES ------------------------ //
-std::string root = "www";
-std::string method = "GET";
-std::string path = "/index.html";
-std::string version = "HTTP/1.1";
-int status_code = 200;
-// ------------------------------------------------------------------ //
 
 /*  TODO: make the response
     1# >>> [] check if the path exist '../etc/passwod'
@@ -26,8 +18,8 @@ int status_code = 200;
 std::string file_check() {
 
     struct stat statbuf;
-    std::string full_path;
-    std::cout << "[>] We get GET request [<]" << std::endl;
+    // std::string full_path;
+    std::cout << "[>...................................] We get GET request [<]" << std::endl;
 
     if (path == "/")
         path = "/index.html";

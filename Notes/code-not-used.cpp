@@ -189,3 +189,94 @@ void epoll_logs(int epoll_stat)
         std::cerr << "[LOG] poll error: "  << strerror(errno) << std::endl;
     }
 }
+
+/* ------------------------------------------------------------------------------------------------ */ 
+
+_statusCodes[200] = "OK";
+_statusCodes[201] = "Created";
+_statusCodes[204] = "No Content";
+_statusCodes[400] = "Bad Request";
+_statusCodes[403] = "Forbidden";
+_statusCodes[404] = "Not Found";
+_statusCodes[405] = "Method Not Allowed";
+_statusCodes[413] = "Payload Too Large";
+_statusCodes[500] = "Internal Server Error";
+
+/* ------------------------------------------------------------------------------------------------ */ 
+class Response {
+    private:
+        unsigned short int          _stat_code;
+        std::map<int, std::string>  _stat_code_msg;
+        std::map<std::string, std::string> _headers; // Stores Date, Content-Type, etc.
+        std::string                 _body;
+        std::string                 _raw_response; // The final string to send()
+
+    public:
+        Response();
+
+        // The "Brain" function
+        // This is where you check for 'return', 'stat()', 'root', etc.
+        void build_response(const Request& req, const Location& loc);
+
+        // Helper methods for the Brain
+        void handle_redirection(const Location& loc);
+        void handle_get(const Request& req, const Location& loc);
+        void handle_error(int code, const ServerBlock& config);
+
+        // The Final Step
+        std::string get_raw_response(); // Returns the full string ready for send()
+};
+
+/* ------------------------------------------------------------------------------------------------ */ 
+
+class Request {
+    private:
+        std::string _method;      // GET, POST, or DELETE
+        std::string _path;        // e.g., /tours/index.html
+        std::string _query;       // e.g., id=123 (anything after ?)
+        std::string _protocol;    // HTTP/1.1
+        std::map<std::string, std::string> _headers;
+        std::string _body;
+        
+        // Parsing states (very important for large requests)
+        bool _is_fully_parsed;
+
+    public:
+        Request(std::string raw_data);
+        // Getters
+        std::string get_method() const;
+        std::string get_path() const;
+        std::string get_header(std::string key) const;
+        // ...
+};
+
+/* ------------------------------------------------------------------------------------------------ */ 
+
+// TOKNOW Content-Length header indicates the size of the message body
+if (package_statement[fd].find("\r\n\r\n") != std::string::npos)
+{
+    std::cout << "[>] We get the \\r\\n\\r\\n [<]" << std::endl;
+    if (package_statement[fd].compare(0, 3, "GET") == 0) {  // just a test
+        std::cout << "[>] GET request [<]" << std::endl;
+        // get();
+    }
+    else if (package_statement[fd].compare(0, 4, "POST")) {
+        std::cout << "[>] POST request [<]" << std::endl;
+        // here will check the content-lenght in the header 
+    }
+    else if (package_statement[fd].compare(0, 6, "DELETE")) {
+        std::cout << "[>] DELETE request [<]" << std::endl;
+    }
+}
+
+/* ------------------------------------------------------------------------------------------------ */ 
+
+std::map<int, ClientContext> clients;
+
+struct ClientContext {
+    Request   req;
+    Response  res;
+    // maybe a buffer for incomplete data
+};
+
+/* ------------------------------------------------------------------------------------------------ */ 
