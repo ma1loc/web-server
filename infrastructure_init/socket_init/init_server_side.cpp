@@ -7,6 +7,7 @@ void socket_engine::init_server_side(std::string port, std::string host)
     int serv_socketFD;
     struct epoll_event new_server_ev;
     struct addrinfo hints, *result;
+    
 
     std::memset(&new_server_ev, 0, sizeof(new_server_ev));
     std::memset (&hints, 0, sizeof(hints));
@@ -37,43 +38,53 @@ void socket_engine::init_server_side(std::string port, std::string host)
 
     int opt = 1;
     if (setsockopt(serv_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        std::cerr << "[-] Error: 'setsockopt' failed: " << strerror(errno) << std::endl;
         free_fds_list();
         close(serv_socketFD);
         freeaddrinfo(result);
-        std::exit(1);
+
+        std::string errno_msg = std::strerror(errno);
+        std::string error_msg = "[-] Error: 'setsockopt' failed: " + errno_msg;
+        throw std::runtime_error(error_msg);
     }
     if (fcntl(serv_socketFD, F_SETFL, O_NONBLOCK) < 0)
     {
-        std::cerr << "[-] Error: 'fcntl' failed: " << strerror(errno) << std::endl;
         freeaddrinfo(result);
         free_fds_list();
         close(serv_socketFD);
-        std::exit(1);
+
+        std::string errno_msg = std::strerror(errno);
+        std::string error_msg = "[-] Error: 'fcntl' failed: " + errno_msg;
+        throw std::runtime_error(error_msg);
     }
     if (bind(serv_socketFD, result->ai_addr, result->ai_addrlen) < 0)
     {
-        std::cerr << "[-] Error: 'bind' failed: " << strerror(errno) << std::endl;
         freeaddrinfo(result);
         free_fds_list();
         close (serv_socketFD);
-        std::exit(1);
+
+        std::string errno_msg = std::strerror(errno);
+        std::string error_msg = "[-] Error: 'bind' failed: " + errno_msg;
+        throw std::runtime_error(error_msg);
     }
     if (listen(serv_socketFD, QUEUE_LIMIT) < 0)
     {
-        std::cerr << "[-] Error: listen failed: " << strerror(errno) << std::endl;
         free_fds_list();
         freeaddrinfo(result);
         close(serv_socketFD);
-        std::exit(1);
+
+        std::string errno_msg = std::strerror(errno);
+        std::string error_msg = "[-] Error: listen failed: " + errno_msg;
+        throw std::runtime_error(error_msg);
     }
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv_socketFD, &new_server_ev) < 0)
     {
-        std::cerr << "[-] Error: 'epoll_ctl' failed: " << strerror(errno) << std::endl;
         close(serv_socketFD);
         freeaddrinfo(result);
         free_fds_list();
-        std::exit(1);
+
+        std::string errno_msg = std::strerror(errno);
+        std::string error_msg = "[-] Error: 'epoll_ctl' failed: " + errno_msg;
+        throw std::runtime_error(error_msg);
     }
 
     freeaddrinfo(result);   // after i set the result info to the socket, bind time to free the memory

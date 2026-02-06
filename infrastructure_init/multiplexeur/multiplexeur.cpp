@@ -1,4 +1,15 @@
 # include "../socket_engine.hpp"
+# include "response.hpp"
+
+std::deque<ServerBlock> socket_engine::get_server_config_info(void)
+{
+    return (server_config_info);
+}
+
+void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config_info)
+{
+    this->server_config_info = server_config_info;
+}
 
 void socket_engine::process_connections(void)
 {
@@ -23,53 +34,46 @@ void socket_engine::process_connections(void)
                     init_client_side(client_fd);
                 else {
                     if (errno != EAGAIN && errno != EWOULDBLOCK)
-                        std::cout << "[!] Accept error: "<< strerror(errno) << std::endl;
+                        std::cout << "[!] accept error: "<< strerror(errno) << std::endl;
                 }
             }
             else    // client event -> done[]
             {
                 std::cout << "[>] Data incoming from Client FD: " << fd << std::endl;
 
-                char raw_buffer[BUFFER_SIZE];
-                std::memset(raw_buffer, 0, sizeof(raw_buffer));
+                char raw_data[BUFFER_SIZE];
+                std::memset(raw_data, 0, sizeof(raw_data));
 
-                int recv_stat = recv(fd, raw_buffer, BUFFER_SIZE, 0);
+                int recv_stat = recv(fd, raw_data, BUFFER_SIZE, 0);
                 std::cout << "Received " << recv_stat << " bytes from fd " << fd << std::endl;
                 
                 if (recv_stat > 0) {
 
                     std::cout << "[>] Received " << recv_stat << " bytes from fd " << fd << std::endl;
-                    std::cout << "[>] --- DATA START ---\n" << raw_buffer << "\n--- DATA END ---" << std::endl;
+                    std::cout << "[>] --- DATA START ---\n" << raw_data << "\n--- DATA END ---" << std::endl;
                     
-                    // TODO: REQUEST PARSING
-                    // NOTE access will be like this:
-                        // raw_client_data[fd].req....
-                        // TODOKNOW: parssing will start when you get 100% of the header by checking \r\n\r\n
-                    // what i need:
-                    /*
-                        method
-                        path
-                        protocol
-                        host -> localhost:8080 -> (virtual host) will skip that
-                        content-lenght -> body size in byte
-                        NOTE in the request, if there's no key:value style ignore it, else save, just in case of the header
-                    */
-                    void    request_handler(std::string raw_buffer); // example
+                    // TODO: REQ/RES
+                    // ------------------------------------------------------------------------------------------ //
+                    // -- HARDCODED VALUES -- request expaction
+                    client &current_client = raw_client_data[fd];
+                    std::deque<ServerBlock> server_config_info = get_server_config_info();
+                    // void    request_handler(char *raw_data, client &client);
+                    // ------------------------------------------------------------------------------------------ //
+                    // response expaction
+                    // if (current_client.req.get_req_stat())   // will check here if the request is ready
 
-                    // ------------------------------------------------------------------------------------- //
-                    // if (raw_client_data[fd].req_ready && raw_client_data[fd].req.get_request_stat() == 0) {
-                        // here i will build the response based on your request
-                    // }
-                    
+                    response_handler(server_config_info ,current_client);
+                    // ------------------------------------------------------------------------------------------ //
                 }
-                else if (recv_stat == 0) {  // client send nothing and close the connection
+                else {
                     close (fd);
                     raw_client_data.erase(fd);
                     remove_fd_from_list(fd);
-                    std::cout << "[!] Client lost connection: " << strerror(errno) << std::endl;
+                    if (recv_stat == 0)  // EOF
+                        std::cerr << "[!] Client lost connection" << std::endl;
+                    else
+                        std::cerr << "[!] Client connection broke: " << strerror(errno) << std::endl;
                 }
-                else
-                    std::cerr << "[-] Error recv failed: " << strerror(errno) << std::endl;
 
             }
         }

@@ -17,17 +17,19 @@ class request {
         // here i will know if there's WRONG REQUEST 'GETblabla'
         // about methode -> Error 405 (Method Not Allowed)
         // about protocol -> Error 400 (Bad Request)
-        
-
         unsigned int request_stat;  
         
     public:
-        request(std::string raw_data);
+        request();
 
         std::string get_method() const;
         std::string get_path() const;
         std::string get_header(std::string key) const;
         // ...
+
+        unsigned int get_req_stat() {
+            return (request_stat);
+        }
 
         // unsigned int get_request_stat() {
         //     return (request_stat);

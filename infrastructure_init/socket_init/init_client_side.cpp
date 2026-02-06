@@ -4,8 +4,8 @@
 void socket_engine::init_client_side(int fd)
 {
     if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
-        close(fd);
-        std::cerr << "[-] fcntl error on fd " << fd << ": " << strerror(errno) << std::endl;
+        close (fd);
+        std::cerr << "[!] fcntl failed: " << strerror(errno) << std::endl;
         return ;
     }
 
@@ -17,7 +17,7 @@ void socket_engine::init_client_side(int fd)
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) < 0) {
         close (fd);
-        std::cerr << "[-] epoll_ctl error on fd " << fd << ": " << strerror(errno) << std::endl;
+        std::cerr << "[!] epoll_ctl failed: " << strerror(errno) << std::endl;
         return ;
     }
     set_fds_list(fd);
