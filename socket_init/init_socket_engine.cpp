@@ -45,7 +45,6 @@ void socket_engine::remove_fd_from_list(int fd)
     std::cout << "--------------------------------------------------------------" << std::endl;
 }
 
-
 void socket_engine::free_fds_list(void)
 {
     for (unsigned long i = 0; i < fds_list.size(); i++)
@@ -62,4 +61,14 @@ void socket_engine::set_server_side_fds(int s_fd) {
 
 std::vector<int> socket_engine::get_server_side_fds(void) {
     return (server_side_fds);
+}
+
+std::deque<ServerBlock> socket_engine::get_server_config_info(void)
+{
+    return (server_config_info);
+}
+
+void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config_info)
+{
+    this->server_config_info = server_config_info;
 }

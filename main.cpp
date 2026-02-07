@@ -1,8 +1,8 @@
-# include "./infrastructure_init/socket_engine.hpp"
+# include "./socket_engine.hpp"
 # include "./config_parsing/ConfigPars.hpp"
 # include <csignal>
 
-// 10-DAYS
+// 11-DAYS
 
 socket_engine s_engine;
 
@@ -45,8 +45,11 @@ int main(int ac, char **av)
     // MY PART //
     try
     {
-        signal(SIGINT, signal_handler);
         int num = 0;
+        signal(SIGINT, signal_handler);
+        s_engine.set_server_config_info(ServerConfig);
+
+        // IN_FUNC
         for (size_t i = 0; i < ServerConfig.size(); i++)
         {
             std::cout << "setup server number #" << i+1 << std::endl;
@@ -55,7 +58,6 @@ int main(int ac, char **av)
             port << num;
             s_engine.init_server_side(port.str(), ServerConfig[i].host); // done[*]
         }
-        s_engine.set_server_config_info(ServerConfig);
         s_engine.process_connections(); // done []
     }
     catch(const std::exception& e)

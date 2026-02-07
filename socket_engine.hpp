@@ -21,9 +21,9 @@
 # include <algorithm>
 # include <deque>
 
-# include "multiplexeur/request.hpp"
-# include "multiplexeur/response.hpp"
-# include "../config_parsing/ConfigPars.hpp"
+# include "request.hpp"
+# include "response.hpp"
+# include "config_parsing/ConfigPars.hpp"
 
 # define TIMEOUT 1000
 # define QUEUE_LIMIT 128
@@ -47,7 +47,8 @@ class socket_engine {
         std::vector<int> fds_list;  // >>> backup for all the fds used to free them in case of SIGINT
         
         std::map<int, client> raw_client_data; // >>> raw request data stored in
-        std::deque<ServerBlock> server_config_info;
+
+        std::deque<ServerBlock> server_config_info; // >>> config file saved here
 
     public:
         socket_engine();

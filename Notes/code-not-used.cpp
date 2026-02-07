@@ -281,15 +281,3 @@ struct ClientContext {
 
 /* ------------------------------------------------------------------------------------------------ */ 
 
-// In your loop:
-client &current_client = raw_client_data[fd];
-request_handler(raw_data, recv_stat, current_client);
-
-// Your friend's function:
-void request_handler(char *raw_data, int size, client &c) {
-    // Friend can now do:
-    c.buffer.append(raw_data, size);
-    if (/* check if done */) {
-        c.req_ready = true;
-    }
-}

@@ -1,18 +1,11 @@
 # include "../socket_engine.hpp"
-# include "response.hpp"
-
-std::deque<ServerBlock> socket_engine::get_server_config_info(void)
-{
-    return (server_config_info);
-}
-
-void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config_info)
-{
-    this->server_config_info = server_config_info;
-}
+# include "../response.hpp"
 
 void socket_engine::process_connections(void)
 {
+
+    std::deque<ServerBlock> server_config_info = get_server_config_info();
+
     while (true) {
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
         std::cout << "[>] epoll return -> " << epoll_stat << std::endl;
@@ -56,12 +49,9 @@ void socket_engine::process_connections(void)
                     // ------------------------------------------------------------------------------------------ //
                     // -- HARDCODED VALUES -- request expaction
                     client &current_client = raw_client_data[fd];
-                    std::deque<ServerBlock> server_config_info = get_server_config_info();
                     // void    request_handler(char *raw_data, client &client);
                     // ------------------------------------------------------------------------------------------ //
                     // response expaction
-                    // if (current_client.req.get_req_stat())   // will check here if the request is ready
-
                     response_handler(server_config_info ,current_client);
                     // ------------------------------------------------------------------------------------------ //
                 }
