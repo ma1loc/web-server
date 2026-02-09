@@ -36,9 +36,12 @@ class response
         ssize_t   get_content_length(void);
 };
 
-void    response_handler(std::deque<ServerBlock> &server_config_info, client &current_client);
-bool    is_allowd_method(std::deque<std::string> allow_methods, std::string method);
-void    path_validation(const LocationBlock *location_block, client &client);
+void        response_handler(std::deque<ServerBlock> &server_config_info, client &current_client);
+bool        is_allowd_method(std::deque<std::string> allow_methods, std::string method);
+void        path_validation(const LocationBlock *location_block, client &client);
 std::string index_file_iterator(std::string &full_path ,const std::deque<std::string> &index);
+void        autoindex_page(std::string &full_path, client &current_client);
+std::string path_resolver(std::string root, std::string path);
+
 
 # endif
