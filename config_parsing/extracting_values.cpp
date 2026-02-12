@@ -88,6 +88,4 @@ std::deque<ServerBlock> tokenzation(std::string fileContent)
     is_syntax_valid(tokenContainer);
     extracting_blocks_plus_final_checks(tokenContainer, serverConfigs);
     return serverConfigs;
-    // debugging code
-    // debugging(serverConfigs);
 }

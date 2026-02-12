@@ -55,19 +55,17 @@ class socket_engine {
         void    init_client_side(int fd);
         void    init_server_side(std::string port, std::string host);
 
-        void    process_connections(void);
+        void    process_connections(void);  // here i have to mutiplixier loop
         void    remove_fd_from_list(int fd);
         void    free_fds_list(void);
 
         void    set_fds_list(int fd);
         void    set_server_side_fds(int s_fd);
         void    set_server_config_info(std::deque<ServerBlock> server_config);
-
         
         std::vector<int>        get_server_side_fds(void);
         std::map<int, client>   &get_raw_client_data(void);
         std::deque<ServerBlock> get_server_config_info(void);
-
 };
 
 # endif

@@ -1,11 +1,9 @@
 # include "./socket_engine.hpp"
 # include "./config_parsing/ConfigPars.hpp"
-# include <csignal>
-
-// 11-DAYS
 
 socket_engine s_engine;
 
+# include <csignal>
 void signal_handler(int sig_flag) {
     (void)sig_flag;
     s_engine.free_fds_list();
@@ -52,10 +50,12 @@ int main(int ac, char **av)
         // IN_FUNC
         for (size_t i = 0; i < ServerConfig.size(); i++)
         {
-            std::cout << "setup server number #" << i+1 << std::endl;
+            std::cout << "[+] SERVER SETUP #" << i+1 << std::endl;
+
             num = ServerConfig[i].listen;
             std::stringstream port;
             port << num;
+
             s_engine.init_server_side(port.str(), ServerConfig[i].host); // done[*]
         }
         s_engine.process_connections(); // done []

@@ -9,6 +9,9 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <unistd.h>
+#include <netdb.h>
+#include <cstring>
 
 //define
 #define PORT_MIN_VAL 1025
@@ -53,7 +56,6 @@ struct ServerBlock
     std::deque<LocationBlock> locations;
 };
 
-
 // content checks
 void error_line(std::string msg, int Line);
 void duplicate_check(std::deque<std::string>& keywords, std::string name);
@@ -91,10 +93,9 @@ void handle_cgi(std::deque<Token>& tokenContainer, LocationBlock& loc, ssize_t& 
 void handle_autoindex(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i);
 void extracting_blocks_plus_final_checks(std::deque<Token>& tokenContainer, std::deque<ServerBlock>& serverConfigs);
 std::deque<ServerBlock> tokenzation(std::string fileContent);
-// debugging
-void debugging(std::deque<ServerBlock>& serverConfigs);
 //get_values
-const ServerBlock* getServerForRequest(const std::string &ip, int port, const std::deque<ServerBlock> &serverConfigs);
+const ServerBlock* getServerForRequest(const int ip, int port, const std::deque<ServerBlock> &serverConfigs);
 const LocationBlock* getLocation(const std::string &path, const ServerBlock& srv);
+in_addr_t address_resolution(std::string host);
 
 #endif

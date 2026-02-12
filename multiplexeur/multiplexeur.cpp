@@ -1,5 +1,6 @@
 # include "../socket_engine.hpp"
 # include "../response.hpp"
+# include "../response_builder.hpp"
 
 void socket_engine::process_connections(void)
 {
@@ -8,10 +9,8 @@ void socket_engine::process_connections(void)
 
     while (true) {
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
-        std::cout << "[>] epoll return -> " << epoll_stat << std::endl;
-
-        for (int i = 0; i < epoll_stat; i++) {
-
+        for (int i = 0; i < epoll_stat; i++)
+        {
             // access the fds of the active sockets
             int fd = events[i].data.fd;
 
@@ -49,8 +48,9 @@ void socket_engine::process_connections(void)
                     // raw_client_data[fd].req;
 
                     // if (raw_client_data[fd].req_ready) {
-                        raw_client_data[fd].res = response(raw_client_data[fd].req);
-                        raw_client_data[fd].res.response_handler(server_config_info);
+                        std::cout << ">>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<" << std::endl;
+                        response_builder response_builder;
+                        response_builder.build_response(raw_client_data[fd], server_config_info);
                         std::cout << ">>>>>>>>>> STATUS CODE: " << raw_client_data[fd].res.get_stat_code() << " <<<<<<<<<<" << std::endl;
                     // }
                     // ------------------------------------------------------------------------------------------ //

@@ -4,8 +4,6 @@
 # include <string>
 # include <map>
 
-struct client;
-
 class request {
     private:
         std::string method;
