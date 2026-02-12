@@ -12,7 +12,7 @@ socket_engine::socket_engine()
         exit(1);
     }
 
-    std::cout << "socket_engine successfully ready!" << std::endl;  // LOG
+    std::cout << "socket_engine successfully ready!" << std::endl;  // LOG  // rm-me
 }
 
 void socket_engine::set_fds_list(int fd) {
@@ -21,7 +21,7 @@ void socket_engine::set_fds_list(int fd) {
 
 void socket_engine::remove_fd_from_list(int fd)
 {
-
+    // rm-me
     std::cout << "--------------------------------------------------------------" << std::endl;
     std::cout << "[>] list befor" << std::endl;
     for (size_t i = 0; i < fds_list.size(); i++)
@@ -29,20 +29,22 @@ void socket_engine::remove_fd_from_list(int fd)
         std::cout << "fd=" << fds_list.at(i) << " ";
     }
     std::cout << "\n";
+    // rm-me
 
     std::vector<int>::iterator fd_position = std::find(fds_list.begin(), fds_list.end(), fd);
     if (fd_position != fds_list.end())
         fds_list.erase(fd_position);
 
-
+    // rm-me
     std::cout << "[>] list after" << std::endl;
     for (size_t i = 0; i < fds_list.size(); i++)
     {
         std::cout << "fd=" << fds_list.at(i) << " ";
     }
     std::cout << "\n";
-
     std::cout << "--------------------------------------------------------------" << std::endl;
+    // rm-me
+
 }
 
 void socket_engine::free_fds_list(void)
@@ -50,7 +52,7 @@ void socket_engine::free_fds_list(void)
     for (unsigned long i = 0; i < fds_list.size(); i++)
     {
         close (fds_list.at(i));
-        std::cout << ">>> free fd[" << fds_list.at(i) << "]" << std::endl;
+        std::cout << ">>> free fd[" << fds_list.at(i) << "]" << std::endl;  // rm-me
     }
     close (epoll_fd);
 }
@@ -61,11 +63,6 @@ void socket_engine::set_server_side_fds(int s_fd) {
 
 std::vector<int> socket_engine::get_server_side_fds(void) {
     return (server_side_fds);
-}
-
-std::deque<ServerBlock> socket_engine::get_server_config_info(void)
-{
-    return (server_config_info);
 }
 
 void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config_info)

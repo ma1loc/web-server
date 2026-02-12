@@ -50,6 +50,9 @@ class socket_engine {
 
         std::deque<ServerBlock> server_config_info; // >>> config file saved here
 
+        void    server_event(ssize_t fd);
+        void    client_event(ssize_t fd);
+
     public:
         socket_engine();
         void    init_client_side(int fd);
@@ -65,7 +68,6 @@ class socket_engine {
         
         std::vector<int>        get_server_side_fds(void);
         std::map<int, client>   &get_raw_client_data(void);
-        std::deque<ServerBlock> get_server_config_info(void);
 };
 
 # endif

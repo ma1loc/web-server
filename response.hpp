@@ -11,7 +11,9 @@
 # define FORBIDDEN_ACCESS 403
 # define NOT_FOUND 404
 # define METHOD_NOT_ALLOWED 405
+# define PAYLOAD_TOO_LARGE 413
 # define SERVER_ERROR 500
+# define METHOD_NOT_IMPLEMENTED 501
 
 class response  // DONE[]
 {

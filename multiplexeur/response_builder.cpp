@@ -1,15 +1,13 @@
 # include "../response_builder.hpp"
 # include "../socket_engine.hpp"    // used just to indelucde the client struct //
 
-// void build_response(client &current_client, std::deque<ServerBlock> &config);
-// response_builder::response_builder(std::deque<ServerBlock> &server_config_info)
-
 // REQUEST HARDCODED VALUES TO TEST
 std::string _method_ = "GET";
 std::string _protocol_ = "HTTP/1.0";
 std::string _path_ = "/";
 std::string _host_ = "localhost";
 int port = 8080;
+// ------------------------------- //
 
 response_builder::response_builder() {};
 
@@ -53,7 +51,7 @@ void    response_builder::autoindex_page(const std::string &full_path)
             break;
         dir_list.push_back(read_dir->d_name);
     }
-    std::string html_gen = html_index_gen(dir_list, full_path);
+    std::string html_gen = default_index_page(dir_list, full_path);
     this->current_client->res.set_body_contnet(html_gen);
     this->current_client->res.set_body_as_ready();
     closedir(dir);
@@ -62,28 +60,9 @@ void    response_builder::autoindex_page(const std::string &full_path)
     std::cout << "-- START (autoindex_page) --\n" << html_gen << "\n-- END (autoindex_page)  --\n" << std::endl;
 }
 
-std::string response_builder::html_index_gen(std::vector<std::string> &dir_list, const std::string &uri_path)
-{
-    std::string gen_html = "<html>\n<body>\n<h1>Index of " + uri_path + "</h1>\n<hr>\n";
-
-    gen_html.append("<a href=\"../\">../</a><br>\n");
-
-    for (size_t i = 0; i < dir_list.size(); i++) {
-        std::string &name = dir_list.at(i);
-
-        if (name == ".") continue;
-        if (name == "..") continue;
-
-        gen_html.append("<a href=\"" + name + "\">" + name + "</a><br>\n");
-    }
-    gen_html.append("<hr>\n</body>\n</html>");
-    return (gen_html);
-}
-
 std::string response_builder::path_resolver()
 {
     std::string root_path = this->locatoin_conf->root;
-    // std::string req_path = this->current_client->res.get_path();
     if (!root_path.empty() && root_path.at(root_path.length() - 1) == '/')
         root_path.erase(root_path.length() - 1);
     return (root_path + _path_);
@@ -115,7 +94,6 @@ void response_builder::build_response(client &current_client, std::deque<ServerB
             will serve the error page.
     */
 
-    // get server block match
     this->current_client = &current_client;
     int s_host = address_resolution(_host_);
     server_conf = getServerForRequest(s_host, port, config);

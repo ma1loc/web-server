@@ -1,8 +1,10 @@
 #include "ConfigPars.hpp"
 
-void handle_listen(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i)
+void handle_listen(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+bool& insideLoc)
 {
     int port = 0;
+    (void)insideLoc;
 
     countARG = count_to_symbol(tokenContainer, i, countARG);
     if (countARG == 1)
@@ -18,8 +20,10 @@ void handle_listen(std::deque<Token>& tokenContainer, ServerBlock& Serv, int cou
         error_line(": listen must only have one argument", tokenContainer[i].line);
 }
 
-void handle_host(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i)
+void handle_host(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+bool& insideLoc)
 {
+    (void)insideLoc;
     countARG = count_to_symbol(tokenContainer, i, countARG);
     if (countARG == 1)
     {
@@ -30,7 +34,7 @@ void handle_host(std::deque<Token>& tokenContainer, ServerBlock& Serv, int count
 }
 
 void handle_server_block_root(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
-    bool& insideLoc)
+bool& insideLoc)
 {
     countARG = count_to_symbol(tokenContainer, i, countARG);
     if (countARG == 1 && !insideLoc)
@@ -42,8 +46,10 @@ void handle_server_block_root(std::deque<Token>& tokenContainer, ServerBlock& Se
     countARG = 0;
 }
 
-void handle_server_name(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i)
+void handle_server_name(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+    bool& insideLoc)
 {
+    (void)insideLoc;
     countARG = count_to_symbol(tokenContainer, i, countARG);
     if (countARG == 1)
     {
@@ -54,7 +60,7 @@ void handle_server_name(std::deque<Token>& tokenContainer, ServerBlock& Serv, in
 }
 
 void handle_server_block_client_mbs(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
-    bool& insideLoc)
+bool& insideLoc)
 {
     countARG = count_to_symbol(tokenContainer, i, countARG);
     if (countARG == 1 && !insideLoc)
@@ -68,10 +74,13 @@ void handle_server_block_client_mbs(std::deque<Token>& tokenContainer, ServerBlo
         error_line(": client_max_body_size must only have one argument", tokenContainer[i].line);
 }
 
-void handle_server_block_index(std::deque<Token>& tokenContainer, ServerBlock& Serv, ssize_t& i)
+void handle_server_block_index(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+bool& insideLoc)
 {
+    (void)countARG;
+    (void)insideLoc;
     i++;
-    if (Serv.index.empty())
+    if (Serv.index.empty() && !insideLoc)
     {
         while(tokenContainer[i].type == 1)
         {
@@ -81,62 +90,70 @@ void handle_server_block_index(std::deque<Token>& tokenContainer, ServerBlock& S
     }
 }
 
-void handle_error_page(std::deque<Token>& tokenContainer, ServerBlock& Serv, ssize_t& i)
+void handle_error_page_server(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+bool& insideLoc)
 {
-        std::deque<int> errorsnum;
-        std::string value;
-        int errornum = 0;
-        i++;
-        while(tokenContainer[i].value != ";")
+    (void)insideLoc;
+    (void)countARG;
+    std::deque<int> errorsnum;
+    std::string value;
+    int errornum = 0;
+    i++;
+    while(tokenContainer[i].value != ";")
+    {
+        errornum = 0;
+        std::stringstream ss(tokenContainer[i].value);
+        ss >> errornum;
+        if (ss.fail() || !ss.eof())
         {
-            errornum = 0;
-            std::stringstream ss(tokenContainer[i].value);
-            ss >> errornum;
-            if (ss.fail() || !ss.eof())
-            {
-                if (!value.empty())
-                    error_line(": there must be only one path in erro_page", tokenContainer[i].line);
-                else
-                    value = tokenContainer[i].value;
-            }
+            if (!value.empty())
+                error_line(": there must be only one path in erro_page", tokenContainer[i].line);
             else
-            {
-                if ((errornum >= 100 && errornum < 600))
-                    errorsnum.push_back(errornum);
-                else
-                    error_line(": error page number must be a valid http number", tokenContainer[i].line);
-            }
-            i++;
+                value = tokenContainer[i].value;
         }
-        if (value.empty() || errorsnum.empty())
-            error_line(": error_page is missing a path or a page error number", tokenContainer[i].line);
         else
         {
-            std::map<std::deque<int>,std::string>::iterator it = Serv.error_page.find(errorsnum);
-            if (it != Serv.error_page.end())
-                Serv.error_page.erase(it);
+            if ((errornum >= 100 && errornum < 600))
+                errorsnum.push_back(errornum);
+            else
+                error_line(": error page number must be a valid http number", tokenContainer[i].line);
         }
+        i++;
+    }
+    if (value.empty() || errorsnum.empty())
+        error_line(": error_page is missing a path or a page error number", tokenContainer[i].line);
+    else
+    {
+        std::map<std::deque<int>,std::string>::iterator it = Serv.error_page.find(errorsnum);
+        if (it != Serv.error_page.end())
+            Serv.error_page.erase(it);
+    }
+    if (!insideLoc)
         Serv.error_page.insert(std::make_pair(errorsnum, value));
+}
+
+typedef void(*handler)(std::deque<Token>& tokenContainer, ServerBlock& Serv, int countARG, ssize_t& i,
+bool& insideLoc);
+
+void handler_caller(std::map<std::string, handler>& handler_map)
+{
+    handler_map["listen"] = &handle_listen;
+    handler_map["host"] = &handle_host;
+    handler_map["root"] = &handle_server_block_root;
+    handler_map["client_max_body_size"] = &handle_server_block_client_mbs;
+    handler_map["server_name"] = &handle_server_name;
+    handler_map["error_page"] = &handle_error_page_server;
+    handler_map["index"] = &handle_server_block_index;
 }
 
 void extracting_values_from_server_block(std::deque<Token>& tokenContainer, bool& insideLoc, ServerBlock& Serv, ssize_t& i)
 {
     int countARG = 0;
+    std::map<std::string, handler> handler_map;
 
-    if (tokenContainer[i].value == "listen")
-        handle_listen(tokenContainer, Serv, countARG, i);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "host")
-        handle_host(tokenContainer, Serv, countARG, i);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "root")
-        handle_server_block_root(tokenContainer, Serv, countARG, i, insideLoc);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "server_name")
-        handle_server_name(tokenContainer, Serv, countARG, i);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "client_max_body_size")
-        handle_server_block_client_mbs(tokenContainer, Serv, countARG, i, insideLoc);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "error_page")
-        handle_error_page(tokenContainer, Serv, i);
-    else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "index")
-        handle_server_block_index(tokenContainer, Serv, i);
+    handler_caller(handler_map);
+    if (handler_map.find(tokenContainer[i].value) != handler_map.end())
+        handler_map[tokenContainer[i].value](tokenContainer, Serv, countARG, i, insideLoc);
     else if (tokenContainer[i].value == "location")
         insideLoc = true;
     else if (insideLoc && (tokenContainer[i].value == "listen" || tokenContainer[i].value == "server_name" || tokenContainer[i].value == "error_page"))
