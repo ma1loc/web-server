@@ -1,5 +1,5 @@
 # include "../response_builder.hpp"
-# include "../socket_engine.hpp"    // used just to indelucde the client struct //
+# include "../socket_engine.hpp"    // used just to indelucde the client struct //  rm-me
 
 // REQUEST HARDCODED VALUES TO TEST
 std::string _method_ = "GET";
@@ -7,7 +7,7 @@ std::string _protocol_ = "HTTP/1.0";
 std::string _path_ = "/";
 std::string _host_ = "localhost";
 int port = 8080;
-// ------------------------------- //
+// ------------------------------- //  rm-me
 
 response_builder::response_builder() {};
 
@@ -36,30 +36,6 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
     return ("");
 }
 
-void    response_builder::autoindex_page(const std::string &full_path)
-{
-    std::cout << "<<<<<<<<<<<<<< autoindex_page call >>>>>>>>>>>>>>" << std::endl;
-
-    DIR *dir = opendir(full_path.c_str());
-    if (dir == NULL)
-        return (this->current_client->res.set_stat_code(FORBIDDEN_ACCESS), (void)0);
-    std::vector<std::string> dir_list;
-    while (true)
-    {
-        dirent *read_dir = readdir(dir);
-        if (read_dir == NULL)
-            break;
-        dir_list.push_back(read_dir->d_name);
-    }
-    std::string html_gen = default_index_page(dir_list, full_path);
-    this->current_client->res.set_body_contnet(html_gen);
-    this->current_client->res.set_body_as_ready();
-    closedir(dir);
-
-    // rm-me
-    std::cout << "-- START (autoindex_page) --\n" << html_gen << "\n-- END (autoindex_page)  --\n" << std::endl;
-}
-
 std::string response_builder::path_resolver()
 {
     std::string root_path = this->locatoin_conf->root;
@@ -73,8 +49,11 @@ void    response_builder::path_validation()
     struct stat statbuf;
 
     std::string full_path = path_resolver();
-    if (stat(full_path.c_str(), &statbuf) < 0 || access(full_path.c_str(), R_OK) < 0)
-        return (this->current_client->res.set_stat_code(NOT_FOUND), (void)0);
+    if (stat(full_path.c_str(), &statbuf) < 0 || access(full_path.c_str(), R_OK) < 0) {
+        this->current_client->res.set_stat_code(NOT_FOUND);
+        return ;
+    }
+
     if (S_ISDIR(statbuf.st_mode)) {     // is DIR
         std::string new_full_path = index_file_iterator(full_path);
         if (!new_full_path.empty())     // here will server the static files .html
@@ -92,6 +71,7 @@ void response_builder::build_response(client &current_client, std::deque<ServerB
     /*
         TODO: just in case the request is ready && no error in the request, if not
             will serve the error page.
+        bad_request() methode that will check if there's any play with the request
     */
 
     this->current_client = &current_client;

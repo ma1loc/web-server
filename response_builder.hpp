@@ -21,13 +21,13 @@ class response_builder
         void        path_validation();
         std::string path_resolver();
         std::string index_file_iterator(const std::string &full_path);
-        std::string default_index_page(std::vector<std::string> &dir_list, const std::string &uri_path);
+        void        autoindex_gen(std::vector<std::string> &dir_list, const std::string &uri_path);
         void        autoindex_page(const std::string &full_path);
         void        default_error_page(unsigned short int stat_code);
 
         // to-do think about
-        void        prepare_content_source(client &current_client, unsigned short int stat_code);
-        void        serve_static_file(client &current_client);  // to-do
+        // void        prepare_content_source(unsigned short int stat_code);
+        void        serve_static_file();  // to-do
     public:
         response_builder();
         void build_response(client &current_client, std::deque<ServerBlock> &config);

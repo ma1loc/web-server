@@ -41,16 +41,15 @@ void    socket_engine::client_event(ssize_t fd)
             response_builder response_builder;
             response_builder.build_response(raw_client_data[fd], server_config_info);
             std::cout << ">>>>>>>>>> STATUS CODE: " << raw_client_data[fd].res.get_stat_code() << " <<<<<<<<<<" << std::endl;   // rm-me
-        }
-        else {
-            close (fd);
-            raw_client_data.erase(fd);
-            remove_fd_from_list(fd);
-            if (recv_stat == 0)  // EOF
-                std::cerr << "[!] Client lost connection" << std::endl;
-            else
-                std::cerr << "[!] Client connection broke: " << strerror(errno) << std::endl;
-        }
+    } else {
+        close (fd);
+        raw_client_data.erase(fd);
+        remove_fd_from_list(fd);
+        if (recv_stat == 0)  // EOF
+            std::cerr << "[!] Client lost connection" << std::endl;
+        else
+            std::cerr << "[!] Client connection broke: " << strerror(errno) << std::endl;
+    }
 }
 
 
