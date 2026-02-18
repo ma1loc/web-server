@@ -4,7 +4,8 @@ void identifying_words_and_keywords(std::string& tok, std::deque<Token>& tokenCo
 {
     if (tok == "server" || tok == "location" || tok == "listen" || tok == "host" || tok == "server_name"
         || tok == "root" || tok == "index" || tok == "allow_methods" || tok == "autoindex" || tok == "return"
-            || tok == "cgi_extension" || tok == "cgi_path" || tok == "error_page" || tok == "client_max_body_size")
+            || tok == "cgi_extension" || tok == "cgi_path" || tok == "error_page" || tok == "client_max_body_size"
+                || tok == "set_timeout")
     {
         Token tikken;
         tikken.type = KEYWORD;
@@ -87,7 +88,5 @@ std::deque<ServerBlock> tokenzation(std::string fileContent)
         throw std::runtime_error("ERROR: nothing was provided in the config file");
     is_syntax_valid(tokenContainer);
     extracting_blocks_plus_final_checks(tokenContainer, serverConfigs);
-    // debugging code
-    // debugging(serverConfigs);
     return serverConfigs;
 }

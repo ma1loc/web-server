@@ -1,27 +1,13 @@
 # include "../response.hpp"
-
-// response::response()
-    // std::cout << "xxxxxxxxxxxxxxxxxxxxxxxxxxclaedxxxxxxxxxxxxxxxxxxxxx" << std::endl;
-    // stat_code = 200;
-
-    // str_stat_code[200] = "OK";
-    // str_stat_code[403] = "Forbidden";
-    // str_stat_code[404] = "Not Found";
-    // str_stat_code[405] = "Method Not Allowed";
-    // str_stat_code[500] = "Internal Server Error";
-
-    // REQUEST HARDCODED VALUES TO TEST
-    // method = "GET";
-    // protocol = "HTTP/1.0";
-    // path = "/";
-    // host = "localhost";
-    // port = 8080;
+# include "../utils/utils.hpp"
+# include <ctime>
 
 response::response() {
     this->stat_code = 200;
     this->content_length = -1;
     this->is_body_ready = false;
     this->path = "";
+
 };
 
 void    response::set_stat_code(unsigned short int stat_code) {
@@ -37,8 +23,8 @@ void    response::set_body_as_ready(void) {
     this->is_body_ready = true;
 }
 
-void    response::set_path(std::string &re_path) {
-    this->path = re_path;
+void    response::set_path(std::string path) {
+    this->path = path;
 }
 
 unsigned short int response::get_stat_code(void) {
@@ -57,3 +43,14 @@ bool    response::get_is_body_ready(void) {
     return (this->is_body_ready);
 }
 
+std::string response::get_start_line()
+{
+    std::string start_line_gen;
+
+    start_line_gen.append(PROTOCOL_VERSION);
+    start_line_gen.append(" ");
+    start_line_gen.append(to_string(stat_code) + " ");
+    start_line_gen.append(stat_code_to_string(stat_code) + "\r\n");
+
+    return (start_line_gen);
+}

@@ -282,3 +282,107 @@ struct ClientContext {
 /* ------------------------------------------------------------------------------------------------ */ 
 
 mailto:support.global@support.mi.com
+
+
+
+    // std::cout << "root_path in path_resolver -> " << root_path << std::endl;
+    // std::cout << "root_path in path_resolver -> " << _path_ << std::endl;
+    
+    if (!root_path.empty() && root_path.at(root_path.length() - 1) == '/')
+        root_path.erase(root_path.length() - 1);
+
+
+std::vector<std::string>    path_split(std::string path)
+{
+    ssize_t     counter = 0;
+    size_t      start = 0;
+    size_t      end;
+
+    while ((end = path.find("/", start)) != std::string::npos) {
+        std::string segment = path.substr(start, end - start);
+        if (segment == "..")
+            counter--;
+        else if (segment != "..")
+            counter++;
+        if (counter < 0)
+            return (403);
+
+            
+        start = end + 1;
+    }
+    std::string last = path.substr(start);
+}
+
+    /*
+        here i will re-build the path based on the path_holder stack and set it to:
+        this->current_client->res.set_path(final_url);
+    */
+
+/* ------------------------------------------------------------------------------------------------ */ 
+
+# server_name localhost;
+
+
+# ===== Server 1 =====
+# server {
+#     listen 8080;
+#     host 127.0.0.1;
+#     root docs/fusion_web/;
+#     client_max_body_size 4000000;
+# 	index index.html index.htm;
+#     error_page 404 error_pages/404.html;
+
+#     location / {
+#         root www/;
+#         autoindex on;
+#         index index.html;
+#         allow_methods GET POST;
+#     }
+
+#     location /www {
+#         root /;
+#         autoindex on;
+#         return /cgi-bin;
+#         index index.html;
+#         allow_methods POST GET;
+#     }
+
+#     location /cgi-bin {
+#         client_max_body_size 30000;
+#         root ./;
+#         allow_methods GET POST DELETE;
+#         index time.py;
+#         cgi_path /usr/bin/python3 /bin/bash;
+#         cgi_extension .py .sh;
+#     }
+# }
+
+# # ===== Server 2 =====
+# server {
+#     listen 8090;
+#     host 127.0.0.1;
+#     root /var/www/site2;
+#     client_max_body_size 2000000;
+#     index main.html;
+#     error_page 403 error_pages/404.html;
+
+#     location / {
+#         allow_methods GET;
+#         autoindex off;
+#     }
+
+#     location /admin {
+#         root /var/www/admin;
+#         allow_methods GET POST;
+#         index admin.html;
+#         cgi_path /usr/bin/php;
+#         cgi_extension .php;
+#     }
+
+#     location /scripts {
+#         allow_methods GET POST DELETE;
+#         index run.sh;
+#         cgi_path /bin/bash;
+#         cgi_extension .sh;
+#     }
+# }

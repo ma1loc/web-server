@@ -7,7 +7,7 @@ std::string   get_error_page_style()
 {
     std::string error_page_style = "\n"
         "   * { padding: 0; margin: 0; }\n"
-        "   body { display: flex; width: 100vw; height: 100vh; background-color: #d6d6d6; }\n"
+        "   body { display: flex; width: 100vw; height: 100vh; background-color: #ffffffff; }\n"
         "   .deful_page_container { display: flex; width: 100vw; height: 100vh; "
             "justify-content: center; align-items: center; flex-direction: column; "
             "font-family: \"Zalando Sans SemiExpanded\", sans-serif; }\n"
@@ -22,7 +22,7 @@ const std::string   get_autoindex_page_style()
 {
     std::string autoindex_style = "\n"
         "   * { padding: 0; margin: 0; }\n"
-        "   body { background-color: #d6d6d6; padding: 40px; "
+        "   body { background-color: #ffffffff; padding: 40px; "
         "          font-family: \"Segoe UI\", \"Roboto\", Helvetica, Arial, sans-serif; }\n"
         "   .index_container { background: #ffffff; max-width: 800px; margin: 0 auto; "
         "                      padding: 20px; border-radius: 8px; "
@@ -31,7 +31,7 @@ const std::string   get_autoindex_page_style()
         "        font-size: 24px; color: #555; }\n"
         "   a { display: block; padding: 8px 12px; text-decoration: none; "
         "       color: #0066cc; border-radius: 4px; transition: background 0.2s; }\n"
-        "   a:hover { background-color: #d6d6d6; color: #004499; }\n"
+        "   a:hover { background-color: #e4e4e4ff; color: #003f8cff; }\n"
         "   .index_path { font-weight: bold; color: #ff0000; }\n"
         "   hr { border: 0; border-top: 1px solid #9a9a9a; margin: 20px 0; }\n";
     return (autoindex_style);

@@ -35,12 +35,22 @@ void    socket_engine::client_event(ssize_t fd)
         
         // TODO: REQ/RES
         // raw_client_data[fd].req;
+        
 
         // if (raw_client_data[fd].req_ready)
             std::cout << ">>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<" << std::endl;   // rm-me
             response_builder response_builder;
+
             response_builder.build_response(raw_client_data[fd], server_config_info);
-            std::cout << ">>>>>>>>>> STATUS CODE: " << raw_client_data[fd].res.get_stat_code() << " <<<<<<<<<<" << std::endl;   // rm-me
+            
+            // rm-me
+            // ----------------------------------------------------------------------------- //
+            std::cout << ">>>>>>>>>> STATUS <<<<<<<<<<<<" << std::endl;
+            std::string start_line_gen = raw_client_data[fd].res.get_start_line();
+            std::cout << "get_start_line -> " << start_line_gen << std::endl;
+            std::cout << "path empty here >>> " << raw_client_data[fd].res.get_path() << std::endl;
+            // ----------------------------------------------------------------------------- //
+
     } else {
         close (fd);
         raw_client_data.erase(fd);
@@ -51,7 +61,6 @@ void    socket_engine::client_event(ssize_t fd)
             std::cerr << "[!] Client connection broke: " << strerror(errno) << std::endl;
     }
 }
-
 
 void    socket_engine::process_connections(void)
 {

@@ -21,7 +21,6 @@
 # include <algorithm>
 # include <deque>
 
-# include "request.hpp"
 # include "response.hpp"
 # include "config_parsing/ConfigPars.hpp"
 
@@ -33,7 +32,7 @@
 
 struct client
 {
-    request req;
+    // request req;
     response res;
     std::string remaining;
     bool req_ready;

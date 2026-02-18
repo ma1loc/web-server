@@ -1,13 +1,29 @@
 # include "utils.hpp"
 # include <map>
-
+# include <fstream>
 # include <iostream>
+# include <vector>
+# include <algorithm>
+# include <iterator>
 
 const std::string   to_string(int num)
 {
     std::stringstream str;
     str << num;
     return (str.str());
+}
+
+const std::string   file_to_string(const std::string& path)
+{
+    std::ifstream file(path.c_str(), std::ios::binary);
+    if (!file.is_open())
+        return "";
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    file.close();
+    return (buffer.str());
 }
 
 const std::string   &stat_code_to_string(unsigned short int stat_code)
@@ -22,4 +38,40 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
         stat_code_str[500] = "Internal Server Error";
     }
     return (stat_code_str[stat_code]);
+}
+
+const std::string resolved_path_extension(std::string path)
+{
+    static std::map<std::string, std::string> extensions;
+    if (extensions.empty()) {
+        extensions[".html"] = "text/html";
+        extensions[".css"]  = "text/css";
+        extensions[".js"]   = "application/javascript";
+        extensions[".png"]  = "image/png";
+        extensions[".jpg"]  = "image/jpeg";
+        extensions[".txt"]  = "text/plain";
+    }
+
+
+    size_t last_dot = path.find_last_of('.');
+    if (last_dot == std::string::npos)
+        return "text/plain";
+
+    std::string ext = path.substr(last_dot);
+    std::map<std::string, std::string>::iterator it = extensions.find(ext);
+    if (it != extensions.end())
+        return (it->second);
+
+    return ("text/plain");
+}
+
+std::string get_time()
+{
+    char buffer[100];
+    time_t now = time(0);
+    struct tm *gmt_time = gmtime(&now);
+
+    strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmt_time);
+
+    return (std::string(buffer));
 }
