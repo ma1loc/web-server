@@ -1,25 +1,6 @@
 # include "../response_builder.hpp"
 # include "../socket_engine.hpp"    // used just to indelucde the client struct //  rm-me
 
-
-// ----------------------------- edge case -----------------------------
-// std::string _path_ = "/www/../www/index.html";
-// static std::string _path_ = "/www/index.html";
-// std::string _path_ = "/www/../../../../../yanflous/Documents/index.html";
-// NEW CASES:
-static std::string _path_ = "./www/index.html";       // my case
-// static std::string _path_ = "/./www/index.html";       // my case
-// static std::string _path_ = "/./www//index.html";       // my case
-// static std::string _path_ = "//www//index.html";     // resolve it to /www/index.html
-// static std::string _path_ = "/www/";                 // get the autoindex from /www/
-// static std::string _path_ = "www/secret.html";       // chmod 000 to secret.html -> 403
-// static std::string _path_ = "GET /www/images";       // 301 Redirect
-// static std::string _path_ = "www/my%20file.html";    // resolve to www/my file.html"
-// .//www/index.html
-// ---------------------------------------------------------------------
-
-// TODO- URI Normalization
-
 std::string path_normalize(const std::string root, std::vector<std::string> path_holder)
 {
     std::string final_url = root;
@@ -35,11 +16,12 @@ std::string path_normalize(const std::string root, std::vector<std::string> path
 bool    response_builder::path_resolver()   // WOKING ON IT []
 {
     std::string root = this->locatoin_conf->root;
-    std::string request_path = _path_;
+    std::string request_path = PATH0;   // <<<<< PATH TEST
 
     // rm-me
     std::cout << ">>> root path >>> " << root << std::endl;
     std::cout << ">>> request path beforrrrrrrrrrrrrrrrr >>> " << request_path << std::endl;
+    //
 
     std::vector<std::string> path_holder;
     size_t      start = 0;
@@ -72,7 +54,7 @@ void    response_builder::path_validation()
 {
     
     if (!path_resolver()) {
-        std::cerr << "!path_resolver() is failed" << std::endl;
+        std::cerr << "[!] path_resolver() is failed" << std::endl;
         return ;
     }
 
@@ -80,14 +62,9 @@ void    response_builder::path_validation()
     std::string path = this->current_client->res.get_path();
 
     std::cout << "the NEW full_path -> " << path << std::endl;
-    
-    // request -> /www
-    // full_path -> /www
-    // and i have the fucking /www in my root dir
 
     if (stat(path.c_str(), &statbuf) < 0) {
         this->current_client->res.set_stat_code(NOT_FOUND);
-        // std::cout << "failed hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" << std::endl;
         return ;
     } else if (access(path.c_str(), R_OK) < 0)  {
         this->current_client->res.set_stat_code(FORBIDDEN_ACCESS);
@@ -95,7 +72,7 @@ void    response_builder::path_validation()
     }
 
     if (S_ISDIR(statbuf.st_mode)) {     // is DIR
-        std::cout << "DIR <<<<<< DDDDDDDDDDDDDDDDDDDIR IS HERE >>>>>>" << std::endl;
+        std::cout << "[+] DDDDDDDDDDDDDDDDDDDIR IS HERE" << std::endl;
         std::string new_full_path = index_file_iterator(path);
         if (!new_full_path.empty())     // here will server the static files .html
             this->current_client->res.set_path(new_full_path);

@@ -1,5 +1,6 @@
 # include "../response_builder.hpp"
 # include "../socket_engine.hpp"    // use to use client struct
+# include "../utils/utils.hpp"
 
 /*  TODO:
     in the case of autoindex user has limit access to files (../..) []
@@ -27,6 +28,7 @@
         will check the edge case too like:
             huge payload > client_max_body_size
             autoindex vulnerable by request like "../../.. ..etc" intel access somthing out of scope
+    
     ------------------------------------------------------------
     before calling the serve_static_file(); -> i alrady has
     body: is alrady ready -> if the autoindex detect i set the body and set it as ready 
@@ -34,7 +36,43 @@
     payload max check will be in case has a huge data
 */
 
-void        response_builder::serve_static_file()
+// struct ResponseHeader {
+//     std::string server_name;
+//     std::string date;
+//     std::string content_type;
+//     size_t      content_length;
+//     std::string connection;
+// };
+
+void    response_builder::set_header(void)
 {
+    response_holder.append(current_client->res.get_start_line());
+    response_holder.append("Server: Webserv\r\n");
+    response_holder.append("Date: " + get_time() + "\r\n");
+    std::string path = this->current_client->res.get_path();
+    if (!is_body_ready)
+        response_holder.append("Content-Type: " + resolved_path_extension(path) + "\r\n");
+    else
+        response_holder.append("Content-Type: text/html\r\n");
+    // -----------------------------------------------------------------
+}
+
+void    response_builder::set_body(void)
+{
+    if (is_body_ready) {
+        response_holder.append("Content-Length: " + to_string(body.size()) + "\r\n\r\n");
+        response_holder.append(body);
+    } else {
+        if (this->current_client->res.get_stat_code() == OK) {  // done in case of valid path
+            std::string body_buff = file_to_string(this->current_client->res.get_path());
+            response_holder.append("Content-Length: " + to_string(body_buff.size()) + "\r\n\r\n");
+            response_holder.append(body_buff);
+        }
+        else
+            std::cout << "[-] PROVIDED PATH IS NOT VALUD" << std::endl;
+    }
+}
+
+void        response_builder::generate_error_page() {
     
 }

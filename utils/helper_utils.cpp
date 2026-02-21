@@ -36,6 +36,8 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
         stat_code_str[405] = "Method Not Allowed";
         stat_code_str[413] = "Payload Too Large";
         stat_code_str[500] = "Internal Server Error";
+
+        // TODO: bad request, ETC....
     }
     return (stat_code_str[stat_code]);
 }
@@ -44,12 +46,12 @@ const std::string resolved_path_extension(std::string path)
 {
     static std::map<std::string, std::string> extensions;
     if (extensions.empty()) {
+        extensions[".txt"]  = "text/plain";
         extensions[".html"] = "text/html";
         extensions[".css"]  = "text/css";
-        extensions[".js"]   = "application/javascript";
         extensions[".png"]  = "image/png";
         extensions[".jpg"]  = "image/jpeg";
-        extensions[".txt"]  = "text/plain";
+        extensions[".js"]   = "application/javascript";
     }
 
 

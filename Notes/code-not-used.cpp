@@ -386,3 +386,141 @@ std::vector<std::string>    path_split(std::string path)
 #         cgi_extension .sh;
 #     }
 # }
+
+// ------------------------------------------------------
+
+void socket_engine::client_event(ssize_t fd) {
+    if (events[i].events & EPOLLIN) {
+        // 1. recv() data
+        // 2. build_response() 
+        // 3. This fills raw_client_data[fd].res.out_buffer (the vector we talked about)
+        
+        // 4. IMPORTANT: Tell epoll you now want to WRITE to this fd
+        modify_epoll_event(fd, EPOLLOUT | EPOLLIN); 
+    }
+    
+    if (events[i].events & EPOLLOUT) {
+        // 5. This is where the magic happens
+        handle_client_write(fd);
+    }
+}
+
+struct epoll_event ev;
+ev.events = EPOLLIN | EPOLLOUT | EPOLLET; // New desired events
+ev.data.fd = target_fd; // Often need to keep user data updated
+if (epoll_ctl(epfd, EPOLL_CTL_MOD, target_fd, &ev) == -1) {
+    perror("epoll_ctl: mod");
+}
+
+void        response_builder::serve_static_file()
+{
+    this->current_client->res.get_is_body_ready();  // flag
+
+
+    // HEADER INFO 
+    // - start line
+    // - server name
+    // - date
+    // - content-type
+    // - content length
+    // BODY INFO
+    std::string start_line = this->current_client->res.get_start_line();
+    header_gen();
+
+
+    std::map<std::string, std::string> header = this->current_client->res.get_header();
+    std::map<std::string, std::string>::iterator it = header.begin();
+    std::cout << "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+    std::cout << "start-line >>> " << start_line;
+    for (; it != header.end(); it++) {
+        std::cout << ">>> " << it->first << ": " << it->second << std::endl;
+    }
+    std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" << std::endl;
+
+    // send(this->current_client->res.)
+    // this->current_client->res.
+    // header_gen();
+    // body_gen();
+    
+}
+
+
+if (events & EPOLLOUT) {
+    // 1. Point to your buffer (vector<char>)
+    std::vector<char> &out_buf = raw_client_data[fd].res.get_full_response_buffer();
+
+    if (!out_buf.empty()) {
+        // 2. Push as much as the OS can take
+        ssize_t sent = send(fd, &out_buf[0], out_buf.size(), 0);
+
+        if (sent > 0) {
+            // 3. Erase only what was actually sent
+            out_buf.erase(out_buf.begin(), out_buf.begin() + sent);
+        } else if (sent == -1) {
+            // Handle error (e.g., EWOULDBLOCK means buffer full, just wait)
+            return; 
+        }
+    }
+
+    // 4. If nothing left to send, stop watching for EPOLLOUT
+    if (out_buf.empty()) {
+        modify_epoll_event(fd, EPOLLIN); // Go back to listening for new requests
+        // If it's a "Connection: close" request, terminate here
+    }
+}
+
+if (events & EPOLLOUT)
+{
+    // A valid minimal HTTP response
+    std::string test_res = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHello World!";
+
+    // Note the use of .c_str() or &[0] to get the DATA, not the object address
+    ssize_t send_stat = send(fd, test_res.c_str(), test_res.size(), 0);
+    
+    if (send_stat >= 0) {
+        // Since we are HTTP/1.0, we kill the connection after sending
+        terminate_client(fd, "Sent test response successfully");
+    }
+}
+
+
+
+void    response::add_header(std::string key, std::string value) {
+    header[key] = value;
+}
+
+void    response::add_body(std::string body) {
+    
+    raw_response.append("Content-Length: " + to_string(content_length) + "\r\n\r\n");
+    this->body = body;
+    content_length = this->body.size();
+    set_body_as_ready();
+}
+
+// NOTE: will alwase start with /
+// ----------------------------- edge case -----------------------------
+
+
+// NOTE: will alwase start with /
+// ----------------------------- edge case -----------------------------
+static std::string _path_ = "/www/../www"; // DIR
+static std::string _path_ = "/www/../www/index.html";
+static std::string _path_ = "/www/../www/secret.html";  // TO fix
+
+static std::string _path_ = "/www/index.html";
+static std::string _path_ = "/www/../../../../../yanflous/Documents/index.html";
+
+NORMALIZE TEXT CASES:
+static std::string _path_ = "/./www/index.html";
+static std::string _path_ = "/./www//index.html";
+static std::string _path_ = "//www//index.html";
+
+NEW CASES:
+static std::string _path_ = "./www/index.html";
+static std::string _path_ = "/www/";
+static std::string _path_ = "www/secret.html";
+
+TO CHECK LATER
+static std::string _path_ = "www/my%20file.html";
+static std::string _path_ = "GET /www/images";
+// ---------------------------------------------------------------------

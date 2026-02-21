@@ -1,10 +1,11 @@
 # include "../response.hpp"
 # include "../utils/utils.hpp"
-# include <ctime>
+
+// # include <ctime>
 
 response::response() {
     this->stat_code = 200;
-    this->content_length = -1;
+    this->content_length = 0;
     this->is_body_ready = false;
     this->path = "";
 
@@ -14,36 +15,32 @@ void    response::set_stat_code(unsigned short int stat_code) {
     this->stat_code = stat_code;
 }
 
-void    response::set_body_contnet(std::string body) {
-    this->body = body;
-    content_length = body.length();
-}
-
-void    response::set_body_as_ready(void) {
-    this->is_body_ready = true;
-}
-
 void    response::set_path(std::string path) {
     this->path = path;
 }
 
-unsigned short int response::get_stat_code(void) {
+void    response::set_raw_response(std::string raw_res) {
+    this->raw_response = raw_res;
+}
+
+unsigned short int response::get_stat_code(void) const {
     return (this->stat_code);
 }
 
-ssize_t   response::get_content_length(void) {
+ssize_t   response::get_content_length(void) const {
     return (this->content_length);
 }
 
-std::string response::get_path(void) {
+std::string response::get_path(void) const {
     return (this->path);
 }
 
-bool    response::get_is_body_ready(void) {
-    return (this->is_body_ready);
+std::string response::get_raw_response(void) {
+    return (this->raw_response);
 }
 
-std::string response::get_start_line()
+
+std::string response::get_start_line()const 
 {
     std::string start_line_gen;
 
@@ -54,3 +51,5 @@ std::string response::get_start_line()
 
     return (start_line_gen);
 }
+
+

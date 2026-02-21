@@ -7,27 +7,14 @@
 std::string _method_ = "GET";
 std::string _protocol_ = "HTTP/1.0";
 
-// NOTE: will alwase start with /
-// ----------------------------- edge case -----------------------------
-// std::string _path_ = "/www/../www/index.html";
-// std::string _path_ = "/www/index.html";
-// static std::string _path_ = "/www/../../../../../yanflous/Documents/index.html";
-// NEW CASES:
-static std::string _path_ = "./www/index.html";      // my case
-// static std::string _path_ = "/./www/index.html";      // my case
-// static std::string _path_ = "/./www//index.html";      // my case
-// static std::string _path_ = "//www//index.html";    // resolve it to /www/index.html
-// static std::string _path_ = "/www/";                // get the autoindex from /www/
-// static std::string _path_ = "www/secret.html";      // chmod 000 to secret.html -> 403
-// static std::string _path_ = "GET /www/images";      // 301 Redirect
-// static std::string _path_ = "www/my%20file.html";   // resolve to www/my file.html"
-// ---------------------------------------------------------------------
-
-std::string _host_ = "localhost";
+// ------------------------------- //  rm-me
+// std::string _host_ = "localhost";
+// std::string _host_ = "192.168.122.1";
+std::string _host_ = "10.11.11.4";
 int _port_ = 8080;
 // ------------------------------- //  rm-me
 
-response_builder::response_builder() {};
+response_builder::response_builder(): is_body_ready(false) {};
 
 bool    response_builder::is_allowd_method(std::string method)
 {
@@ -54,45 +41,76 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
     return ("");
 }
 
+// // ------------ TEST -------------
+// # define METHODE "GET"
+// # define METHODE "POST"
+// # define METHODE "DELETE"
+// // -------------------------------
 
-/*  TO-KNONW ABOUT THE RESPONCE HEADER INFO
-        start-line gen [*]
-        server-name [*]
-        date gen [*]
-        content-length [*] based on the body will send
-        content-type [*]
-        cache-control [] -> i don't know what is for, just ignore it?
-*/
+void    response_builder::handle_post() {
+    
+}
+
+void response_builder::response_setup()
+{
+    // ----------- HARDCODED -----------
+    std::string _method_ = "GET";
+    // std::string _method_ = "POST";
+    // std::string _method_ = "DELETE";
+    // ---------------------------------
+
+    if (current_client->res.get_stat_code() != OK) {
+        generate_error_page();
+        return;
+    }
+
+    if (_method_ == "GET") {
+        handle_get();
+    }
+    else if (_method_ == "POST") {
+        handle_post();
+    }
+    else if (_method_ == "DELETE") {
+        handle_delete();
+    }
+    this->current_client->res.set_raw_response(response_holder);
+}
+
+std::string    response_builder::get_stat_code_path(unsigned int stat_code)
+{
+    std::deque<int> key;
+
+    key.push_back(stat_code);
+    std::map<std::deque<int>, std::string>::const_iterator it = server_conf->error_page.find(key);
+    if(it != server_conf->error_page.end())
+        return (it->second);
+    return (NULL);
+}
+
 void response_builder::build_response(client &current_client, std::deque<ServerBlock> &config)
 {
-    /*
-        TODO: just in case the request is ready && no error in the request, if not
-            will serve the error page.
-        bad_request() methode that will check if there's any play with the request
-    */
-
     this->current_client = &current_client;
-    int s_host = address_resolution(_host_);
 
+    int s_host = address_resolution(_host_);
     server_conf = getServerForRequest(s_host, _port_, config);  // move
 
-    if (server_conf == NULL) 
+    std::cout << "error path -> " << get_stat_code_path(404) << std::endl;
+    exit(123);
+
+    if (server_conf == NULL)
         current_client.res.set_stat_code(NOT_FOUND);
     else {
-        // need to normalize the path before check
-        
-        locatoin_conf = getLocation(_path_, *server_conf);   // move
+        // TODO: need to normalize the path before check
+        locatoin_conf = getLocation(PATH0, *server_conf);   // <<<<< PATH TEST
         if (locatoin_conf == NULL) { // find location
             current_client.res.set_stat_code(NOT_FOUND);
-            exit(9);    // we have a problem here, about normalize the path
         }
         else {
-            std::cout << "path of getLocation -> " << locatoin_conf->path << std::endl;
             if (is_allowd_method(_method_))
                 path_validation();
             else
                 current_client.res.set_stat_code(METHOD_NOT_ALLOWED);
         }
     }
-    // serve_static_file();
+    response_setup();
 }

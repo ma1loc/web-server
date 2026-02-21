@@ -42,9 +42,9 @@ void    response_builder::default_error_page(unsigned short int stat_code)
     // std::string str_code = to_string(stat_code);
     const std::string status_code = to_string(stat_code);
     const std::string str_of_stat_code = stat_code_to_string(stat_code);
-    const std::string title = "Webserver: " + status_code + str_of_stat_code;
+    const std::string title = "Webserv: " + status_code + str_of_stat_code;
     const std::string style = get_error_page_style();
-    this->current_client->res.set_body_contnet("<!DOCTYPE html>\n"
+    this->body = "<!DOCTYPE html>\n"
         "<html lang=\"en\">\n"
         "<head>\n"
         "\t<meta charset=\"UTF-8\">\n"
@@ -64,15 +64,14 @@ void    response_builder::default_error_page(unsigned short int stat_code)
         "\t\t<p class=\"go_back\"> <a href=\"/\"> Return to Home </a> </p>\n"
         "\t</div>\n"
         "</body>\n"
-        "</html>");
-    this->current_client->res.set_stat_code(stat_code);
-    this->current_client->res.set_body_as_ready();
+        "</html>";
+    is_body_ready = true;
 }
 
 void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, const std::string &uri_path)
 {
     std::string style = get_autoindex_page_style();
-    std::string html_gen = "<!DOCTYPE html>\n"
+    this->body = "<!DOCTYPE html>\n"
         "<html lang=\"en\">\n"
         "<head>\n"
         "\t<meta charset=\"UTF-8\">\n"
@@ -91,14 +90,14 @@ void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, cons
         if (name == ".") continue;
         if (name == "..") continue;
 
-        html_gen.append("\t\t<a href=\"" + name + "\">" + name + "</a><br>\n");
+        this->body.append("\t\t<a href=\"" + name + "\">" + name + "</a><br>\n");
     }
-    html_gen.append("\t\t<hr>\n\t</div>\n</body>\n</html>");
-    this->current_client->res.set_body_contnet(html_gen);
-    this->current_client->res.set_body_as_ready();
+    this->body.append("\t\t<hr>\n\t</div>\n</body>\n</html>");
+    is_body_ready = true;
 
-     // rm-me
-    std::cout << "-- START (autoindex_page) --\n" << html_gen << "\n-- END (autoindex_page)  --\n" << std::endl;
+    // rm-me
+    std::cout << "-- START (autoindex_page) --\n" << this->body << "\n-- END (autoindex_page)  --\n" << std::endl;
+    //
 }
 
 void    response_builder::autoindex_page(const std::string &full_path)

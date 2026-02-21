@@ -16,11 +16,26 @@
 
 # define PROTOCOL_VERSION   "HTTP/1.0"
 
+// PATH REQUEST TEST
+// # define PATH0  "/www/index.html"
+# define PATH0  "/www/../www"
+// # define PATH0  "/www/../www/index.html"
+// # define PATH0  "/www/../www/secret.html"
+// # define PATH0  "/www/../../../../../yanflous/Documents/index.html"
+// # define PATH0  "/./www/index.html"
+// # define PATH0  "/./www//index.html"
+// # define PATH0  "//www//index.html"
+// # define PATH0  "./www/index.html"
+// # define PATH0  "/www/"
+// # define PATH0   "www/secret.html"
+// # define PATH0   "www/my%20file.html"
+// # define PATH0   "GET /www/images"
+
+
 class response  // DONE[]
 {
     private:
-        std::map<std::string, std::string>  header;
-        std::string                         body;
+        std::string         raw_response;   //  new
 
         std::string         path;
         unsigned short int  stat_code;
@@ -35,20 +50,20 @@ class response  // DONE[]
 
         // SETTERS
         void    set_stat_code(unsigned short int stat_code);
-        void    set_body_contnet(std::string body);
         void    set_path(std::string path);
-        void    set_body_as_ready(void);
+        void    set_raw_response(std::string raw_res);
 
         // GETTERS
-        std::string         get_str_stat_code(unsigned short int code);
-        unsigned short int  get_stat_code(void);
-        ssize_t             get_content_length(void);
-        std::string         get_path(void);
-        bool                get_is_body_ready(void);
+        std::string         get_str_stat_code(unsigned short int code) const;
+        unsigned short int  get_stat_code(void) const;
+        ssize_t             get_content_length(void) const;
+        std::string         get_path(void) const;
+        std::string         get_start_line(void) const;
+        std::string         get_raw_response(void);
 
-        // -------------------------------------------------- //
 
-        std::string         get_start_line(void);
+        // std::map<std::string, std::string>  &get_header();
+        // std::string                         &get_body();
 
 };
 
