@@ -17,9 +17,11 @@ class response_builder
         const ServerBlock       *server_conf;
         const LocationBlock     *locatoin_conf;
         std::string             response_holder;
+        std::string             path;
         std::string             header;
         std::string             body;
         bool                    is_body_ready;
+        bool                    is_error_page;
         
         
         bool        is_allowd_method(std::string method);
@@ -35,6 +37,7 @@ class response_builder
         // void        prepare_content_source(unsigned short int stat_code);
         void            set_header(void);
         void            set_body(void);
+        
         void            handle_get();
         void            handle_post();
         void            handle_delete();

@@ -5,6 +5,9 @@
 # include <vector>
 # include <algorithm>
 # include <iterator>
+# include <sys/stat.h>
+# include <unistd.h>
+
 
 const std::string   to_string(int num)
 {
@@ -76,4 +79,15 @@ std::string get_time()
     strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmt_time);
 
     return (std::string(buffer));
+}
+
+// check: exist, permissions, dir -> false
+bool    is_valid_error_path(std::string path)
+{
+    struct stat statbuf;
+    if (stat(path.c_str(), &statbuf) < 0
+            || access(path.c_str(), F_OK | R_OK) < 0
+        || S_ISDIR(statbuf.st_mode))
+        return (false);
+    return (true);
 }

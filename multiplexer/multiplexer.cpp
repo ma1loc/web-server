@@ -3,13 +3,13 @@
 # include "../response_builder.hpp"
 # include "../utils/utils.hpp"
 
-// -------------------------------------------------------
-// static std::string _host_ = "localhost";
-// static std::string _host_ = "192.168.122.1";
+// -------------------- HARDCODED --------------------------
 static std::string _host_ = "10.11.11.4";
 static int _port_ = 8080;
-// -------------------------------------------------------
 
+// static std::string _host_ = "localhost";
+// static int _port_ = 9090;
+// -------------------------------------------------------
 void socket_engine::server_event(ssize_t fd)
 {
     int client_fd = accept(fd, NULL, NULL);
@@ -66,9 +66,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events)
     }
     if (events & EPOLLOUT)
     {   
-        // std::string buffer_knowon = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";
         std::string buffer_knowon = raw_client_data[fd].res.get_raw_response();
-        // is there any diffrence between size() and length() in case of raw data count???
         if (!buffer_knowon.empty()) {
 
             ssize_t send_stat = send(fd, buffer_knowon.c_str(), buffer_knowon.size(), 0);
