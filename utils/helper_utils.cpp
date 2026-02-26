@@ -16,6 +16,8 @@ const std::string   to_string(int num)
     return (str.str());
 }
 
+// --------------------------------------------------------------------------------------------
+
 const std::string   file_to_string(const std::string& path)
 {
     std::ifstream file(path.c_str(), std::ios::binary);
@@ -28,6 +30,8 @@ const std::string   file_to_string(const std::string& path)
     file.close();
     return (buffer.str());
 }
+
+// --------------------------------------------------------------------------------------------
 
 const std::string   &stat_code_to_string(unsigned short int stat_code)
 {
@@ -44,6 +48,8 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
     }
     return (stat_code_str[stat_code]);
 }
+
+// --------------------------------------------------------------------------------------------
 
 const std::string resolved_path_extension(std::string path)
 {
@@ -70,6 +76,8 @@ const std::string resolved_path_extension(std::string path)
     return ("text/plain");
 }
 
+// --------------------------------------------------------------------------------------------
+
 std::string get_time()
 {
     char buffer[100];
@@ -81,6 +89,8 @@ std::string get_time()
     return (std::string(buffer));
 }
 
+// --------------------------------------------------------------------------------------------
+
 // check: exist, permissions, dir -> false
 bool    is_valid_error_path(std::string path)
 {
@@ -90,4 +100,58 @@ bool    is_valid_error_path(std::string path)
         || S_ISDIR(statbuf.st_mode))
         return (false);
     return (true);
+}
+
+// -------------------------------------------------------------------------------------------
+
+std::string path_normalize(std::vector<std::string> path_holder)
+{
+    std::string final_url;
+
+    for (size_t i = 0; i < path_holder.size(); i++) {
+        final_url.append("/");
+        final_url.append(path_holder.at(i));
+    }
+    return (final_url);
+}
+
+// --------------------------------------------------------------------------------------------
+
+std::string   path_resolver(std::string request_path)
+{
+    std::string root;
+    // std::string path;
+
+    std::vector<std::string> path_holder;
+    size_t      start = 0;
+    size_t      end;
+
+    while ((end = request_path.find("/", start)) != std::string::npos)
+    {
+        std::string segment = request_path.substr(start, (end - start));
+        if (segment == ".." && path_holder.empty()) {
+            start = end + 1;
+            continue;
+        }
+        else if (segment == "..")
+            path_holder.pop_back();
+        else if (!segment.empty())
+            path_holder.push_back(segment);
+        start = end + 1;
+    }
+    path_holder.push_back(request_path.substr(start));
+    
+    return (path_normalize(path_holder));
+}
+
+// --------------------------------------------------------------------------------------------
+
+std::vector<std::string>    extract_host_info(std::string raw_req)
+{
+    std::map<std::string, std::string>::iterator it;
+    std::map<std::string, std::string> headert = raw_client_data[fd].req.getHeaders();
+    for (it = headert.begin(); it != headert.end();it++)
+    {
+        std::cout << it->first << " :" << it->second << std::endl;
+    }
 }

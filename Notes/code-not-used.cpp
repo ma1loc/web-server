@@ -577,3 +577,45 @@ void    response_builder::handle_get()  // OK request
         set_body();
     }
 }
+
+
+
+
+
+
+
+ std::cout << "THE FUCKING REQUEST HAS CATCHING SOMETHING NOT VALID [ " << x << " ]" << std::endl;
+                std::cout << "--------------------------------------------" << std::endl;
+                std::cout << "Method :" << this->raw_client_data[fd].req.getMethod() << std::endl;
+                std::cout << "Path :" << this->raw_client_data[fd].req.getPath() << std::endl;
+                std::cout << "Query :" << this->raw_client_data[fd].req.getQuery() << std::endl;
+                std::cout << "HTTP version :" << this->raw_client_data[fd].req.getHttpVersion() << std::endl;
+                std::cout << "--------------------------------------------" << std::endl;
+                std::map<std::string, std::string>::iterator it;
+                std::map<std::string, std::string> headert = raw_client_data[fd].req.getHeaders();
+                for (it = headert.begin(); it != headert.end();it++)
+                {
+                    std::cout << it->first << " :" << it->second << std::endl;
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // std::cout << "Received " << recv_stat << " bytes from fd " << fd << std::endl;  // rm-me
+
+        // std::cout << "Received " << recv_stat << " bytes from fd " << fd << std::endl;  // rm-me
+            // std::cout << "[>] Received " << recv_stat << " bytes from fd " << fd << std::endl;  // rm-me
+            // std::cout << "[>] --- DATA START ---\n" << raw_data << "\n--- DATA END ---" << std::endl;   // rm-me
+            // ------------------------- REQUEST MOST START FIRST HERE ------------------------- //
+            // std::cout << "------------ raw_data_buff\n" << raw_data_buff << "\n------------ raw_data_buff" << std::endl;
+            // std::cout << raw_client_data[fd].req.getPath() << "-----------++++++++++++------------+++++++++++" << std::endl;
+            // std::cout << ">>>>>> CLIENT FD -> " << fd << std::endl;

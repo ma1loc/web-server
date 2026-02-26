@@ -7,29 +7,37 @@
 # include "config_parsing/ConfigPars.hpp"
 
 # define OK 200
+# define BAT_REQUEST 400
 # define FORBIDDEN_ACCESS 403
 # define NOT_FOUND 404
 # define METHOD_NOT_ALLOWED 405
 # define PAYLOAD_TOO_LARGE 413
 # define SERVER_ERROR 500
 # define METHOD_NOT_IMPLEMENTED 501
+# define VERSION_NOT_SUPP 505
 
+# define REQ_NOT_READY 0
 # define PROTOCOL_VERSION   "HTTP/1.0"
 
 // PATH REQUEST TEST
-// # define PATH0  "/www/index.html"
-# define PATH0  "/www/../www"
-// # define PATH0  "/www/../www/index.html"
-// # define PATH0  "/www/../www/secret.html"
-// # define PATH0  "/www/../../../../../yanflous/Documents/index.html"
+// # define PATH0  "/www/index.html"                                        // PASS
+# define PATH0  "/www/../"                                        // PASS
+// # define PATH0  "/www/../www"                                            // PASS
+// # define PATH0  "/www/../www/index.html"                                 // PASS
+// # define PATH0  "/www/../www/secret.html"                                // PASS
+// # define PATH0  "/www/../../../../../yanflous/Documents/index.html"      // PASS
+// ------------------------------------------------------
+// request normalization test
 // # define PATH0  "/./www/index.html"
 // # define PATH0  "/./www//index.html"
 // # define PATH0  "//www//index.html"
 // # define PATH0  "./www/index.html"
-// # define PATH0  "/www/"
-// # define PATH0   "www/secret.html"
-// # define PATH0   "www/my%20file.html"
-// # define PATH0   "GET /www/images"
+// ------------------------------------------------------
+// # define PATH0  "/www"                                                   // PASS
+// # define PATH0  "/www/"                                                  // PASS
+// # define PATH0   "www/secret.html"                                       // PASS
+// # define PATH0   "www/my%20file.html"                                    // NOT-YET
+// ------------------------------------------------------
 
 
 class response  // DONE[]

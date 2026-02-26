@@ -1,70 +1,114 @@
- # include "../socket_engine.hpp"
+# include "../socket_engine.hpp"
 # include "../response.hpp"
 # include "../response_builder.hpp"
 # include "../utils/utils.hpp"
+// -------------- request headers ----------------
+# include "../client.hpp"
+# include "../request/includes/request.hpp"
+# include "../request/includes/parseRequest.hpp"
+// -----------------------------------------------
 
-// -------------------- HARDCODED --------------------------
-static std::string _host_ = "10.11.11.4";
-static int _port_ = 8080;
+
+// // -------------------- HARDCODED --------------------------
+// // static std::string _host_ = "10.11.11.4";
+// // static int _port_ = 8080;
 
 // static std::string _host_ = "localhost";
 // static int _port_ = 9090;
-// -------------------------------------------------------
-void socket_engine::server_event(ssize_t fd)
+// // -------------------------------------------------------
+
+
+void socket_engine::server_event(ssize_t fd)    // DONE
 {
-    int client_fd = accept(fd, NULL, NULL);
+    struct sockaddr_in client_addr;
+    socklen_t addr_len = sizeof(client_addr);
+
+    int client_fd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
     if (client_fd < 0) {
         std::cerr << "[!] Accept failed on FD: " << fd << ": " << std::strerror(errno) << std::endl;
         return;
     }
+    char    *client_ip = inet_ntoa(client_addr.sin_addr);
+    int     client_port = ntohs(client_addr.sin_port);
+    std::cout << "[+] New Connection from " << client_ip 
+            << ":" << client_port << " on FD " << client_fd << std::endl;
+
     init_client_side(client_fd);
 }
 
+// WOKING ON IT
 /*  TODO:
-    create EPOLLIN ready to read methode
-    create EPOLLOUT ready to write methode
-*/
+    get the Host from the request header (in case of; GET, POST or DELETE)???
+    extract the host && parsing it to [host, port] then check using
+        server_conf = getServerForRequest(s_host, _port_, config);
+        location_conf = getLocation(this->path, *server_conf); 
+    then check if the Host info is there in server block if yes serve it
+    otherways error page Bad request 400
+    at the end of a problem will call 
+    this->raw_client_data[fd].res.set_stat_code(BAD_REQUEST);
+                    */
 void    socket_engine::client_event(ssize_t fd, uint32_t events)
 {
-    std::cout << "[>] Data incoming from Client FD: " << fd << std::endl;   // rm-me
+    // std::cout << "[>] Data incoming from Client FD: " << fd << std::endl;   // rm-me
     
-    if (events & EPOLLIN) {
+    if (events & EPOLLIN)   // READY TO READ
+    {
         char raw_data[BUFFER_SIZE];
         std::memset(raw_data, 0, sizeof(raw_data));
 
         int recv_stat = recv(fd, raw_data, BUFFER_SIZE, 0);
-        std::cout << "Received " << recv_stat << " bytes from fd " << fd << std::endl;  // rm-me
         if (recv_stat > 0) {
             this->raw_client_data[fd].last_activity = time(0);
+            std::string raw_data_buff(raw_data, recv_stat);
+            int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
+            std::cout << "[>] req_stat exist with it -> " << req_stat << std::endl;
+            if (req_stat == REQ_NOT_READY)  // request not ready
+                return ;
+            else    // 200, 404, 500...
+            {
+                response_builder response_builder;
+                this->raw_client_data[fd].res.set_stat_code(req_stat);
+                // TODO: a methode to take the raw req and extract from it info
+                // -------------------------------------------------------------------------------                
+                            
+                // ----------------- HARDCODED ------------------
+                // HEADER Host -> server { ... } block to use
+                // _host_, _port_, _methode -. getting it form the request
+                // ---------------------------------------------
 
-            // --------------- temp inter request ready --------------
-            this->raw_client_data[fd].host = _host_;
-            this->raw_client_data[fd].port = _port_;
-            // -------------------------------------------------------
-
-            std::cout << "[>] Received " << recv_stat << " bytes from fd " << fd << std::endl;  // rm-me
-            std::cout << "[>] --- DATA START ---\n" << raw_data << "\n--- DATA END ---" << std::endl;   // rm-me
-
-            // NOTE: REQUEST MOST START FIRST HERE //
-
-            // if (raw_client_data[fd].req_ready)
-                std::cout << ">>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<" << std::endl;   // rm-me
+                int s_host = address_resolution(_host_);
+                server_conf = getServerForRequest(s_host, _port_, config);
+                if (server_conf == NULL)    // ???
+                    current_client.res.set_stat_code(SERVER_ERROR);
                 
-                // NOTE: it's only job is make the response ready
-                response_builder response_builder;  // it's just a temprary class 
-                // build_response it's job to init the client &current_client to use it later
+                // ---------------------------------------------
+
+                this->path = path_resolver(PATH0);
+                location_conf = getLocation(this->path, *server_conf);
+                if (location_conf == NULL) {
+                    std::cout << "THE FUCKING LOCATION PATH IS NOT EXIST IN THE SERVER BLOCK" << std::endl;
+                    exit(0);
+                    current_client.res.set_stat_code(NOT_FOUND);
+                }
+                // ---------------------------------------------
+
+                // -------------------------------------------------------------------------------
+                std::cout << ">>>>>>>>>>> RESPONSE GEN <<<<<<<<<<<<" << std::endl;
                 response_builder.build_response(raw_client_data[fd], server_config_info);
-            
-            // NOTE: CALLING modify_epoll_event MEAN'S response full ready //
-            modify_epoll_event(fd, EPOLLOUT | EPOLLIN);
-        } else {
+                modify_epoll_event(fd, EPOLLOUT | EPOLLIN);
+                // -------------------------------------------------------------------------------
+            }
+
+        }
+        else
+        {
             if (recv_stat == 0)  // EOF
                 terminate_client(fd, "[!] Client lost connection");
             else
                 terminate_client(fd, "[!] Client connection broke");
         }
     }
-    if (events & EPOLLOUT)
+    if (events & EPOLLOUT)  // READY TO WRITE
     {   
         std::string buffer_knowon = raw_client_data[fd].res.get_raw_response();
         if (!buffer_knowon.empty()) {
@@ -88,20 +132,21 @@ void    socket_engine::process_connections(void)
         // >>> epoll_fd -> is the pipe of the fds_table in the kernal
         // >>> events -> is a array that hold the active fds
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
+        
         for (int i = 0; i < epoll_stat; i++)
         {
-            // >>> Get access to ready
+            // >>> get access to ready events
             int fd = events[i].data.fd;
 
-            // ------------------------------------------------------------------------------------------------
-            // int fd is a server fd or clietn fd?
+            // >>> fd is a server fd or clietn fd
             std::vector<int>::iterator is_server = std::find(server_side_fds.begin(), server_side_fds.end(), fd);
-            if (is_server != server_side_fds.end()) // server event -> done[*]
-                server_event(fd);   // Accept + Set time(0) [*]
-            else    // client event -> done[]
-                client_event(fd, events[i].events);   // Recv/Send + Update time(0) [*]
-            // ------------------------------------------------------------------------------------------------
+            
+            if (is_server != server_side_fds.end()) // New client + time(0)
+                server_event(fd);   // DONE [*]
+            else
+                client_event(fd, events[i].events);   // Recv/Send + Update time(0)
         }
+        
         // in this function i have to get the server config file timeout and the now - last_activity
         check_all_client_timeouts();
     }

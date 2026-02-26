@@ -1,7 +1,9 @@
 # include "../response_builder.hpp"
 # include "../socket_engine.hpp"    // used just to indelucde the client struct //  rm-me
-
+# include "../utils/utils.hpp"
+# include "../client.hpp"
 # include <stack>
+
 
 // -------------------- HARDCODED --------------------------
 std::string _method_ = "GET";
@@ -10,23 +12,20 @@ std::string _method_ = "GET";
 
 std::string _protocol_ = "HTTP/1.0";
 
-static std::string _host_ = "10.11.11.4";
-static int _port_ = 8080;
+// static std::string _host_ = "10.11.11.4";
+// static int _port_ = 8080;
 
-// static std::string _host_ = "localhost";
-// static int _port_ = 9090;
+static std::string _host_ = "localhost";
+static int _port_ = 9090;
 
-# define GET_METHODE "GET"
-# define POST_METHODE "POST"
-# define DELETE_METHODE "DELETE"
 // -------------------------------------------------------
 
 response_builder::response_builder(): is_body_ready(false), is_error_page(false) {};
 
 bool    response_builder::is_allowd_method(std::string method)
 {
-    for (size_t i = 0; i < this->locatoin_conf->allow_methods.size(); i++) {
-        if (this->locatoin_conf->allow_methods.at(i) == method)
+    for (size_t i = 0; i < this->location_conf->allow_methods.size(); i++) {
+        if (this->location_conf->allow_methods.at(i) == method)
             return (true);
     }
     return (false);
@@ -39,8 +38,8 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
     if (!full_path.empty() && full_path.at(full_path.length() -1) != '/')
         based_path += '/';
 
-    for (size_t i = 0; i < this->locatoin_conf->index.size(); i++) {
-        redirection_path = based_path + this->locatoin_conf->index.at(i);
+    for (size_t i = 0; i < this->location_conf->index.size(); i++) {
+        redirection_path = based_path + this->location_conf->index.at(i);
         if (access(redirection_path.c_str(), F_OK | R_OK) == 0)
             return (redirection_path);
     }
@@ -52,7 +51,7 @@ void response_builder::response_setup()
     std::cout << "STATUS CODE " << current_client->res.get_stat_code() << std::endl;
     if (current_client->res.get_stat_code() != OK)  // error page
         generate_error_page();
-    else if (_method_ == GET_METHODE)   // auto-index
+    else if (_method_ == GET_METHODE)
         handle_get();
     else if (_method_ == POST_METHODE)
         handle_post();
@@ -61,30 +60,15 @@ void response_builder::response_setup()
     this->current_client->res.set_raw_response(response_holder);
 }
 
-void response_builder::build_response(client &current_client, std::deque<ServerBlock> &config)
+void response_builder::build_response(Client &current_client, std::deque<ServerBlock> &config)
 {
     this->current_client = &current_client;
 
-    int s_host = address_resolution(_host_);
-    server_conf = getServerForRequest(s_host, _port_, config);  // move
-
-    if (server_conf == NULL)
-        current_client.res.set_stat_code(NOT_FOUND);
-    else {
-        // TODO: need to normalize the path before check
-        locatoin_conf = getLocation(PATH0, *server_conf);   // <<<<< PATH TEST
-        if (locatoin_conf == NULL) { // find location
-            current_client.res.set_stat_code(NOT_FOUND);
-        }
-        else {
-            if (is_allowd_method(_method_)) {
-                std::cout << "STATUS CODE " << this->current_client->res.get_stat_code() << std::endl;
-                path_validation();
-            }
-            else
-                current_client.res.set_stat_code(METHOD_NOT_ALLOWED);
-        }
+    if (this->current_client->res.get_stat_code() == OK) {
+        if (!is_allowd_method(_method_))
+            current_client.res.set_stat_code(METHOD_NOT_ALLOWED);
+        else    // join the root with path
+            path_validation();
     }
     response_setup();
-    
 }

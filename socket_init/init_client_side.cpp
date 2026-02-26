@@ -3,7 +3,8 @@
 // (DONE[*])
 void socket_engine::init_client_side(int fd)
 {
-    // Accept + Set time(0) there's no need for the timeout value of the config file
+
+    inisializeClient(this->raw_client_data[fd]);
     this->raw_client_data[fd].last_activity = time(0);
 
     if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {

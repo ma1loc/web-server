@@ -23,6 +23,7 @@
 
 # include "response.hpp"
 # include "config_parsing/ConfigPars.hpp"
+# include "client.hpp"
 
 # define TIMEOUT 1000 // type???
 # define TIMEOUT_LIMIT 60
@@ -31,20 +32,6 @@
 # define PROTOCOL_TYLE 0
 # define MAX_EVENTS 64
 
-struct client
-{
-    // temp ---------
-    int         port;
-    std::string host;
-    // --------------
-    
-    // request req;
-    response    res;
-
-    // about the timeout check
-    unsigned int last_activity;
-};
-
 class socket_engine {
     private:
         int epoll_fd;   // ID for the table
@@ -52,7 +39,7 @@ class socket_engine {
         std::vector<int> server_side_fds;   // >>> backup for the server socket fds
         std::vector<int> fds_list;  // >>> backup for all the fds used to free them in case of SIGINT
         
-        std::map<int, client> raw_client_data; // >>> raw request data stored in
+        std::map<int, Client> raw_client_data; // >>> raw request data stored in
         std::deque<ServerBlock> server_config_info; // >>> config file saved here
 
         void    server_event(ssize_t fd);
@@ -77,7 +64,7 @@ class socket_engine {
 
 
         std::vector<int>        get_server_side_fds(void);
-        std::map<int, client>   &get_raw_client_data(void);
+        std::map<int, Client>   &get_raw_client_data(void);
 };
 
 time_t time(time_t* timer);

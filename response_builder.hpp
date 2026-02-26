@@ -7,15 +7,21 @@
 # include <sys/stat.h>
 # include "response.hpp"
 # include "./config_parsing/ConfigPars.hpp"
+# include "client.hpp"
+
+
+# define GET_METHODE "GET"
+# define POST_METHODE "POST"
+# define DELETE_METHODE "DELETE"
 
 struct client;
 
 class response_builder
 {
     private:
-        client                  *current_client;
-        const ServerBlock       *server_conf;
-        const LocationBlock     *locatoin_conf;
+        Client                  *current_client;
+        // const ServerBlock       *server_conf;
+        // const LocationBlock     *location_conf;
         std::string             response_holder;
         std::string             path;
         std::string             header;
@@ -26,7 +32,7 @@ class response_builder
         
         bool        is_allowd_method(std::string method);
         void        path_validation(void);
-        bool        path_resolver(void);
+        // bool        path_resolver(void);
         std::string index_file_iterator(const std::string &full_path);
         void        autoindex_gen(std::vector<std::string> &dir_list, const std::string &uri_path);
         void        autoindex_page(const std::string &full_path);
@@ -45,7 +51,7 @@ class response_builder
         void            response_setup(void);   // MAKE "response_holder"
     public:
         response_builder();
-        void build_response(client &current_client, std::deque<ServerBlock> &config);
+        void build_response(Client &current_client, std::deque<ServerBlock> &config);
 };
 
 # endif
