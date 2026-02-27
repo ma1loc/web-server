@@ -43,6 +43,8 @@
 class response  // DONE[]
 {
     private:
+        int         port;
+        std::string host;
         std::string         raw_response;   //  new
 
         std::string         path;
@@ -68,10 +70,6 @@ class response  // DONE[]
         std::string         get_path(void) const;
         std::string         get_start_line(void) const;
         std::string         get_raw_response(void);
-
-
-        // std::map<std::string, std::string>  &get_header();
-        // std::string                         &get_body();
 
 };
 

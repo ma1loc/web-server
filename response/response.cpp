@@ -51,5 +51,3 @@ std::string response::get_start_line()const
 
     return (start_line_gen);
 }
-
-

@@ -46,7 +46,25 @@ void socket_engine::server_event(ssize_t fd)    // DONE
     otherways error page Bad request 400
     at the end of a problem will call 
     this->raw_client_data[fd].res.set_stat_code(BAD_REQUEST);
-                    */
+
+    // --------------------------------------------------------------------------
+    int s_host = address_resolution(_host_);
+    server_conf = getServerForRequest(s_host, _port_, config);
+    if (server_conf == NULL)    // ???
+        current_client.res.set_stat_code(SERVER_ERROR);
+    
+    // --------------------------------------------------------------------------
+    this->path = path_resolver(PATH0);
+    location_conf = getLocation(this->path, *server_conf);
+    if (location_conf == NULL) {
+        std::cout << "THE FUCKING LOCATION PATH IS NOT EXIST IN THE SERVER BLOCK" << std::endl;
+        exit(0);
+        current_client.res.set_stat_code(NOT_FOUND);
+    }
+    // --------------------------------------------------------------------------
+
+*/
+
 void    socket_engine::client_event(ssize_t fd, uint32_t events)
 {
     // std::cout << "[>] Data incoming from Client FD: " << fd << std::endl;   // rm-me
@@ -60,45 +78,55 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events)
         if (recv_stat > 0) {
             this->raw_client_data[fd].last_activity = time(0);
             std::string raw_data_buff(raw_data, recv_stat);
+            /*  TODO-FIX
+                U have to read just the header at first what ever there's a body or not
+                for me a will take the header and get you witch server block matched or not
+                if there's a match i'll give you back
+                    client_max_body_size
+                    if the method is allowd
+                    the cgi
+            */// --------------------------------------------------------------------------
+
+            /*  TODO-FIX 'what i have to done' as @ma1loc
+                take provided header and looking for Host
+                    when i get it will splite it: addr, port
+                    then will take the addr, port: search on my config file to get a match
+                    if there's a match will give you back
+                        client_max_body_size
+                        allowd method
+                        cgi
+            */
+            // TODO: a methode to take the raw req and extract from it info
+            // -------------------------------------------------------------------------------                
+            
+            // ----------------- HARDCODED ------------------
+            // HEADER Host -> server { ... } block to use
+            // _host_, _port_, _methode -. getting it form the request
+            // --------------------------------------------------------------------------
+
             int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
             std::cout << "[>] req_stat exist with it -> " << req_stat << std::endl;
             if (req_stat == REQ_NOT_READY)  // request not ready
                 return ;
             else    // 200, 404, 500...
             {
-                response_builder response_builder;
                 this->raw_client_data[fd].res.set_stat_code(req_stat);
-                // TODO: a methode to take the raw req and extract from it info
-                // -------------------------------------------------------------------------------                
-                            
-                // ----------------- HARDCODED ------------------
-                // HEADER Host -> server { ... } block to use
-                // _host_, _port_, _methode -. getting it form the request
-                // ---------------------------------------------
-
-                int s_host = address_resolution(_host_);
-                server_conf = getServerForRequest(s_host, _port_, config);
-                if (server_conf == NULL)    // ???
-                    current_client.res.set_stat_code(SERVER_ERROR);
                 
-                // ---------------------------------------------
+                // JUST IN CASE HEADER IS OK
+                response_builder response_builder;
+                response_builder.init_response_builder(raw_client_data[fd]);
+                response_builder.validate_headers(raw_client_data[fd].req.getHeaders());
 
-                this->path = path_resolver(PATH0);
-                location_conf = getLocation(this->path, *server_conf);
-                if (location_conf == NULL) {
-                    std::cout << "THE FUCKING LOCATION PATH IS NOT EXIST IN THE SERVER BLOCK" << std::endl;
-                    exit(0);
-                    current_client.res.set_stat_code(NOT_FOUND);
-                }
-                // ---------------------------------------------
 
-                // -------------------------------------------------------------------------------
-                std::cout << ">>>>>>>>>>> RESPONSE GEN <<<<<<<<<<<<" << std::endl;
-                response_builder.build_response(raw_client_data[fd], server_config_info);
+
+
+
+
+                // LAST THING -------------------------------------------------------------------------------
+                response_builder.build_response();
                 modify_epoll_event(fd, EPOLLOUT | EPOLLIN);
                 // -------------------------------------------------------------------------------
             }
-
         }
         else
         {

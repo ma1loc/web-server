@@ -20,12 +20,15 @@ static int _port_ = 9090;
 
 // -------------------------------------------------------
 
+// current_client->server_conf;
+// current_client->location_conf;
+
 response_builder::response_builder(): is_body_ready(false), is_error_page(false) {};
 
 bool    response_builder::is_allowd_method(std::string method)
 {
-    for (size_t i = 0; i < this->location_conf->allow_methods.size(); i++) {
-        if (this->location_conf->allow_methods.at(i) == method)
+    for (size_t i = 0; i < current_client->location_conf->allow_methods.size(); i++) {
+        if (current_client->location_conf->allow_methods.at(i) == method)
             return (true);
     }
     return (false);
@@ -38,8 +41,8 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
     if (!full_path.empty() && full_path.at(full_path.length() -1) != '/')
         based_path += '/';
 
-    for (size_t i = 0; i < this->location_conf->index.size(); i++) {
-        redirection_path = based_path + this->location_conf->index.at(i);
+    for (size_t i = 0; i < current_client->location_conf->index.size(); i++) {
+        redirection_path = based_path + current_client->location_conf->index.at(i);
         if (access(redirection_path.c_str(), F_OK | R_OK) == 0)
             return (redirection_path);
     }
@@ -60,14 +63,36 @@ void response_builder::response_setup()
     this->current_client->res.set_raw_response(response_holder);
 }
 
-void response_builder::build_response(Client &current_client, std::deque<ServerBlock> &config)
-{
+// void    response_builder::init_response_builder(Client &current_client, std::deque<ServerBlock> &config) {
+void    response_builder::init_response_builder(Client &current_client) {
     this->current_client = &current_client;
+}
 
+void    response_builder::validate_headers(std::map<std::string, std::string> header)
+{
+    // here will parse the header infos needed //
+    /*
+        extract from the request header:
+            Host:
+                based on host will extract:
+                    server-level block
+                    location-level block
+                        based on both:
+                            will get the infos looking for
+                                allowed methodes
+                                max-client-body-size
+                                CGI
+    */
+
+}
+
+
+void response_builder::build_response()
+{
     if (this->current_client->res.get_stat_code() == OK) {
         if (!is_allowd_method(_method_))
-            current_client.res.set_stat_code(METHOD_NOT_ALLOWED);
-        else    // join the root with path
+            this->current_client->res.set_stat_code(METHOD_NOT_ALLOWED);
+        else    // >>> join the root with path
             path_validation();
     }
     response_setup();
