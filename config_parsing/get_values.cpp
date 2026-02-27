@@ -45,11 +45,6 @@ const ServerBlock* getServerForRequest(const int ip, int port,
     }
     return NULL;
 }
-<<<<<<< HEAD
-// ???
-// checks for exact path match in location in case it didnt find it it gives the default one if it exist
-// this function uses prefix matche logic
-=======
 
 // std::string path_normalize(const std::string root, std::vector<std::string> path_holder)
 // {
@@ -91,7 +86,6 @@ const ServerBlock* getServerForRequest(const int ip, int port,
 //     return path;
 // }
 
->>>>>>> origin/config_parsing
 const LocationBlock* getLocation(const std::string &path, const ServerBlock& srv)
 {
     size_t bestmatch = 0;
