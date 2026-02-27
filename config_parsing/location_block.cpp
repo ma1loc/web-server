@@ -190,7 +190,8 @@ void extracting_location_blocks(std::deque<Token>& tokenContainer , ServerBlock&
             {
                 if (tokenContainer[i].value == "{")
                     keepCountOfBrase++;
-                else if ((i + 1) < (ssize_t)tokenContainer.size() && (pos = tokenContainer[i].value.find_first_of("/")) != 0 && tokenContainer[i + 1].value == "{")
+                else if ((i + 1) < (ssize_t)tokenContainer.size() && (pos = tokenContainer[i].value.find_first_of("/")) != 0
+                    && tokenContainer[i + 1].value == "{")
                     error_line(": paths must start with /", tokenContainer[i].line);
                 else if ((i - 1) >= 0 && tokenContainer[i].type == 1 && tokenContainer[i - 1].value == "location")
                     loc.path = tokenContainer[i].value;

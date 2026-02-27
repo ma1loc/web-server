@@ -86,8 +86,6 @@ void checking_values(ServerBlock& Serv)
     empty_values_check(Serv.error_page, "error_page");
     empty_values_check(Serv.host, "host");
     empty_values_check(Serv.index, "index");
-    // else if (Serv.server_name.empty())
-    //     throw std::runtime_error("ERROR: server_name has incorrect value");
     // these values will have a default if they dont exist
     for (size_t i = 0; i < Serv.locations.size(); i++)
     {
@@ -127,29 +125,3 @@ void checking_for_virtual_hosts(std::deque<int>& seen)
             throw std::runtime_error("ERROR: there must be only unique ports per server block");
     }
 }
-
-// used to check only for two server with both same port and ip or server name
-// void checking_for_virtual_hosts(std::multimap<int, std::string>& seen, std::string& msg)
-// {
-//     size_t key = 0;
-//     size_t count = 0;
-//     std::string value;
-
-//     for (std::map<int, std::string>::iterator it = seen.begin();
-//         it != seen.end(); ++it)
-//     {
-//         count = 0;
-//         key = it->first;
-//         value = it->second;
-//         std::multimap<int, std::string>::iterator lower = seen.lower_bound(key);
-//         std::multimap<int, std::string>::iterator upper = seen.upper_bound(key);
-//         for (std::map<int, std::string>::iterator it = lower;
-//             it != upper; ++it)
-//         {
-//             if (value == it->second)
-//                 count++;
-//         }
-//         if (count > 1)
-//             throw std::runtime_error(msg);
-//     }
-// }
