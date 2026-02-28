@@ -42,6 +42,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events)
     
     if (events & EPOLLIN)   // READY TO READ
     {
+        
         char raw_data[BUFFER_SIZE];
         std::memset(raw_data, 0, sizeof(raw_data));
 
@@ -56,9 +57,9 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events)
                 return ;
             else if (req_stat == OK)    // header ready
             {
+                response_builder response_builder;
                 // as header most have a defult header size //
                 // if there's any error put it in the this->current_client->res.set_stat_code
-                response_builder response_builder;
                 response_builder.init_response_builder(raw_client_data[fd]);
                 response_builder.validate_headers();
 

@@ -107,5 +107,6 @@ bool parseHeaders(Client &client, std::string &data)
 
     if (!checkSetHeaders(NumberOfTokens, client, tokens))
         return false;
+    
     return true;
 }

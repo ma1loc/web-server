@@ -25,6 +25,7 @@ struct Client
     Request req;
 	reqParse parse;
     response res;
+    // response_builder response_builder;
     bool    reqReady;
 
     // about the timeout check
