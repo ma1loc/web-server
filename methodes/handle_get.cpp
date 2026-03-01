@@ -1,5 +1,5 @@
 # include "../response_builder.hpp"
-# include "../socket_engine.hpp"    // use to use client struct
+# include "../socket_engine.hpp"
 # include "../utils/utils.hpp"
 
 void    response_builder::set_header(void)
@@ -29,15 +29,13 @@ void    response_builder::generate_error_page()
     std::string res_path;
     unsigned short int status_code = this->current_client->res.get_stat_code();
     
-    if (this->server_conf)
+    if (this->current_client->server_conf)
         std::string res_path = get_stat_code_path(status_code);
     if (is_valid_error_path(res_path)) {
-            std::cout << "------------------------------> VALID ERROR PATH <---------------------------------" << std::endl;
             this->path = res_path;
             set_header();
             set_body();
     } else {
-        std::cout << "------------------------------> NO ERROR PATH <---------------------------------" << std::endl;
         set_header();
         default_error_page(status_code);
     }
@@ -45,10 +43,6 @@ void    response_builder::generate_error_page()
 
 void    response_builder::handle_get()  // OK request
 {
-    // std::cout << "GET REQUEST LATER ON :(" << std::endl;
     set_header();
     set_body();
-
-    std::cout << "------- FULL RESPONSE\n" << response_holder << "\n------- FULL RESPONSE" << std::endl;
-    // exit(111);
 }

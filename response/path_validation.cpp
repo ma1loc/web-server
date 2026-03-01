@@ -6,8 +6,8 @@ std::string    response_builder::get_stat_code_path(unsigned int stat_code)
     std::deque<int> key;
 
     key.push_back(stat_code);
-    std::map<std::deque<int>, std::string>::const_iterator it = server_conf->error_page.find(key);
-    if(it != server_conf->error_page.end())
+    std::map<std::deque<int>, std::string>::const_iterator it = this->current_client->server_conf->error_page.find(key);
+    if(it != this->current_client->server_conf->error_page.end())
         return (it->second);
     return ("");
 }
@@ -42,11 +42,11 @@ void    response_builder::path_validation()
 
     if (S_ISDIR(statbuf.st_mode)) {     // is DIR
         std::cout << "[+] DDDDDDDDDDDDDDDDDDDIR IS HERE" << std::endl;
-        index = index_file_iterator(path);
+        index = index_file_iterator(this->path);
         if (!index.empty())     // here will server the static files .html
             this->path = index;
         else if (index.empty() && current_client->location_conf->autoindex)
-            autoindex_page(this->path);   // STOP HERE //
+            autoindex_page(this->path, this->current_client->req.getPath());
         else {
             this->current_client->res.set_stat_code(FORBIDDEN_ACCESS);
         }

@@ -6,6 +6,12 @@
 # include "request/includes/parseRequest.hpp"
 # include "response.hpp"
 
+# define GREEN_S "\033[0;32m"
+# define GREEN_E "\033[0m"
+
+# define READ_S "\033[31m"
+# define READ_E "\033[0m"
+
 class Request;
 struct reqParse;
 
@@ -20,7 +26,8 @@ struct Client
     unsigned int        host;
 
     /// get the location-level match
-    const LocationBlock *location_conf;
+    const ServerBlock       *server_conf;
+    const LocationBlock     *location_conf;
 
     Request req;
 	reqParse parse;

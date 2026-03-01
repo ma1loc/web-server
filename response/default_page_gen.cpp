@@ -71,7 +71,7 @@ void    response_builder::default_error_page(unsigned short int stat_code)
     this->is_body_ready = true;
 }
 
-void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, const std::string &uri_path)
+void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, const std::string &request_uri)
 {
     std::string style = get_autoindex_page_style();
     this->body = "<!DOCTYPE html>\n"
@@ -79,7 +79,7 @@ void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, cons
         "<head>\n"
         "\t<meta charset=\"UTF-8\">\n"
         "\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-        "\t<title> Index of " + uri_path + "</title>\n"
+        "\t<title> Index of " + request_uri + "</title>\n"
         "\t<style>" + style + "</style>\n"
         "</head>\n"
         "<body>\n"
@@ -87,25 +87,28 @@ void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, cons
         "\t\t<a class=\"index_path\" href=\"../\">../</a><br>\n";
     // -------------------------------------------------------------- //
 
-    for (size_t i = 0; i < dir_list.size(); i++) {
+    for (size_t i = 0; i < dir_list.size(); i++)
+    {
         std::string &name = dir_list.at(i);
+        std::string path = request_uri;
 
         if (name == ".") continue;
         if (name == "..") continue;
 
-        this->body.append("\t\t<a href=\"" + name + "\">" + name + "</a><br>\n");
+        if (request_uri.at(request_uri.length() - 1) != '/')
+            path += '/';
+        path += name;
+
+        this->body.append("\t\t<a href=\"" + path + "\">" + name + "</a><br>\n");
     }
     this->body.append("\t\t<hr>\n\t</div>\n</body>\n</html>");
     this->is_body_ready = true;
 }
 
-void    response_builder::autoindex_page(const std::string &full_path)
+void    response_builder::autoindex_page(const std::string &full_path, const std::string &request_uri)
 {
-    std::cout << "<<<<<<<<<<<<<< autoindex_page call >>>>>>>>>>>>>>" << std::endl; // rm-me
-    std::cout << "PPPPPPPPPPPPPPPPP -> " << full_path << std::endl;
     DIR *dir = opendir(full_path.c_str());
     if (dir == NULL){
-        exit(132);
         return (this->current_client->res.set_stat_code(FORBIDDEN_ACCESS), (void)0);
     }
     std::vector<std::string> dir_list;
@@ -116,7 +119,6 @@ void    response_builder::autoindex_page(const std::string &full_path)
             break;
         dir_list.push_back(read_dir->d_name);
     }
-    autoindex_gen(dir_list, full_path);
+    autoindex_gen(dir_list, request_uri);
     closedir(dir);
-    
 }

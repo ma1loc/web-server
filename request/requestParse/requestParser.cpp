@@ -7,6 +7,8 @@ int parseRequest(Client &client, std::string &recivedData)
     client.parse.remaining.append(recivedData);
     if (client.parse.step == REQLINE)
     {
+        if (client.parse.remaining.size() > MAX_REQ_SIZE)
+            return BAD_REQUEST;
         size_t newLinePos = client.parse.remaining.find("\r\n");
         if (newLinePos != std::string::npos)
         {
@@ -22,6 +24,8 @@ int parseRequest(Client &client, std::string &recivedData)
     }
     if (client.parse.step == HEADERS)
     {
+        if (client.parse.remaining.size() > MAX_HEADER_SIZE)
+            return BAD_REQUEST;
         size_t headerEnd = client.parse.remaining.find("\r\n\r\n");
         if (headerEnd == 0)
         {

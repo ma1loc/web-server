@@ -1,4 +1,3 @@
-# include "utils.hpp"
 # include <map>
 # include <fstream>
 # include <iostream>
@@ -7,6 +6,9 @@
 # include <iterator>
 # include <sys/stat.h>
 # include <unistd.h>
+# include "utils.hpp"
+# include "../client.hpp"
+# include "../socket_engine.hpp"
 
 # define MIN_VALID_PORT 1024
 # define MAX_VALID_PORT 65535
@@ -148,7 +150,6 @@ std::string   path_resolver(std::string request_path)
 
 // --------------------------------------------------------------------------------------------
 
-
 unsigned short int  valid_port_number(std::string port_num)
 {
     for (unsigned int i = 0; i < port_num.size(); i++) {
@@ -160,4 +161,69 @@ unsigned short int  valid_port_number(std::string port_num)
     if (port <= MIN_VALID_PORT || port > MAX_VALID_PORT)
         return (0);
     return (port);
+}
+
+// --------------------------------------------------------------------------------------------
+
+extern socket_engine s_engine;
+bool    validate_headers(Client &current_client)
+{
+    // here will parse the header infos needed //
+    /*
+        extract from the request header:
+            Host:
+                based on host will extract:
+                    server-level block
+                    location-level block
+                        based on both:
+                            will get the infos looking for
+                                allowed methodes
+                                max-client-body-size
+                                CGI
+    */
+    // this->server_conf = NULL;
+    current_client.location_conf = NULL;
+
+    std::map<std::string, std::string> header = current_client.req.getHeaders();
+    std::map<std::string, std::string>::iterator it = header.find("HOST");
+
+    const unsigned long index = it->second.find(":");
+    if (index != std::string::npos)
+    {
+        std::string host = it->second.substr(0, index);
+        std::string port = it->second.substr((index + 1));
+
+        current_client.host = address_resolution(host);
+        if (current_client.host == INADDR_NONE)  // invalid host
+            current_client.host = 0;
+
+        current_client.port = valid_port_number(port);
+        if (!current_client.port)    // invalid port
+            current_client.port = 0;
+
+        if (current_client.port != 0 && current_client.host != INADDR_NONE)
+        {
+            // getLocation
+            current_client.server_conf = getServerForRequest(current_client.host,
+                current_client.port, s_engine.get_server_config_info()); // will match server-level
+            if (!current_client.server_conf) {
+                current_client.res.set_stat_code(NOT_FOUND);
+                return (false);
+            }
+            current_client.location_conf = getLocation(current_client.req.getPath(), *current_client.server_conf);
+            if (!current_client.location_conf)
+            {
+                current_client.res.set_stat_code(NOT_FOUND);
+                return (false);
+            }
+        }
+        // this->current_client->location_conf->allow_methods
+        // this->current_client->location_conf->client_max_body_size
+        // this->current_client->location_conf->cgi_extension
+        // this->current_client->location_conf->cgi_path
+        // this->current_client->location_conf->redirection???????
+    }
+    else
+        current_client.res.set_stat_code(NOT_FOUND);
+    return (true);
 }
