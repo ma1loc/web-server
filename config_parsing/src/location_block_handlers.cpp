@@ -1,6 +1,5 @@
 #include "../includes/ConfigPars.hpp"
 
-
 void handle_client_mbs(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
     std::string& keyword)
 {

@@ -2,6 +2,7 @@
 #define ConfigPars_HPP
 
 #include "ContentValidation.hpp"
+#include "ServerBlockLookUp.hpp"
 #include "ServerBlock.hpp"
 #include "LocationBlock.hpp"
 #include  <iostream>
@@ -30,7 +31,7 @@ std::deque<ServerBlock> tokenzation(std::string fileContent);
 void debugging(std::deque<ServerBlock>& serverConfigs);
 
 //get_values
-const ServerBlock* getServerForRequest(const int ip, const size_t port, const std::deque<ServerBlock> &serverConfigs);
-const LocationBlock* getLocation(const std::string &path, const ServerBlock& srv);
+// const ServerBlock* getServerForRequest(const int ip, const size_t port, const std::deque<ServerBlock> &serverConfigs);
+// const LocationBlock* getLocation(const std::string &path, const ServerBlock& srv);
 
 #endif
