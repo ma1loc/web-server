@@ -22,7 +22,6 @@ class response_builder
 {
     private:
         Client                  *current_client;
-        const ServerBlock       *server_conf;
         std::string             response_holder;
         std::string             path;
         std::string             header;
@@ -34,7 +33,8 @@ class response_builder
         void            path_validation(void);
         std::string     index_file_iterator(const std::string &full_path);
         void            autoindex_gen(std::vector<std::string> &dir_list, const std::string &uri_path);
-        void            autoindex_page(const std::string &full_path);
+        // void            autoindex_page(const std::string &full_path);
+        void            autoindex_page(const std::string &full_path, const std::string &request_uri);
         void            default_error_page(unsigned short int stat_code);
         std::string     get_stat_code_path(unsigned int stat_code);
         void            generate_error_page();
@@ -54,5 +54,8 @@ class response_builder
         void    build_response();
 
 };
+
+// void    validate_headers(Client &current_client);
+bool    validate_headers(Client &current_client);
 
 # endif

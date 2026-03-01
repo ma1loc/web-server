@@ -54,8 +54,9 @@ int main(int ac, char **av)
             // ----------------- JUST LOGS ----------------- //
             host = ServerConfig[i].host;
             port = to_string(ServerConfig[i].listen);
-            std::cout << "Serving HTTP on " << host << " port " << port
-                << " (http://" << host << ":" << port << "/)" << std::endl;
+            std::cout << GREEN_S << "Serving HTTP on " << host << " port " << port
+                << " (http://" << host << ":" << port << "/)"
+                << GREEN_E << std::endl;
             // --------------------------------------------- //
 
             s_engine.init_server_side(port, host);  // TO-CHECK LATER
