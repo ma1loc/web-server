@@ -22,11 +22,12 @@
 # include <deque>
 
 # include "response.hpp"
-# include "config_parsing/ConfigPars.hpp"
+# include "config_parsing/includes/ConfigPars.hpp"
 # include "client.hpp"
 
 # define TIMEOUT 1000 // type???
-# define TIMEOUT_LIMIT 60
+# define TIMEOUT_LIMIT 5
+// # define TIMEOUT_LIMIT 60
 # define QUEUE_LIMIT 128
 # define BUFFER_SIZE 1024
 # define PROTOCOL_TYLE 0

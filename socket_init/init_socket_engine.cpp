@@ -11,8 +11,6 @@ socket_engine::socket_engine()
         std::cerr << "[-] Error epoll_create failed: " << strerror(errno) << std::endl; // ERR
         exit(1);
     }
-
-    std::cout << "socket_engine successfully ready!" << std::endl;  // LOG  // rm-me
 }
 
 void socket_engine::set_fds_list(int fd) {
@@ -54,6 +52,7 @@ void socket_engine::free_fds_list(void)
         close (fds_list.at(i));
         std::cout << ">>> free fd[" << fds_list.at(i) << "]" << std::endl;  // rm-me
     }
+    std::cout << ">>> free fd[" << epoll_fd << "]" << std::endl;  // rm-me
     close (epoll_fd);
 }
 
@@ -74,10 +73,16 @@ void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config
     this->server_config_info = server_config_info;
 }
 
-void socket_engine::check_all_client_timeouts(void)
+// ServerBlockLookup server(port, host, server_config_info);
+// // const ServerBlock *server_conf = getServerForRequest(host, port, server_config_info);
+// const ServerBlock *server_conf = server.getServer();
+// const LocationBlock*loc = server.getLocation("path");
+
+void socket_engine::check_all_client_timeouts(void) // TODO-CHECK
 {
     time_t now = time(0);
     std::map<int, Client>::iterator it = raw_client_data.begin();
+    ServerBlockLookup server_conf_block;
 
     while (it != raw_client_data.end()) 
     {
@@ -86,37 +91,21 @@ void socket_engine::check_all_client_timeouts(void)
         int host = it->second.host;
         size_t timeout_limit = TIMEOUT_LIMIT;
         
-        // ----------------------------------------------------------
-        std::cout << "it->first -> " << it->first << std::endl;
-        std::cout << "port -> " << port << std::endl;
-        std::cout << "host -> " << it->second.host << std::endl;
-        // ---------------------------------------------------------- 
-
-        const ServerBlock *server_conf = getServerForRequest(host, port, server_config_info);
+        server_conf_block.setServerForRequest(host, port, server_config_info);
+        const ServerBlock * server_conf = server_conf_block.getServer();
         if (server_conf != NULL)
             timeout_limit = server_conf->set_timeout;
 
         if ((now - it->second.last_activity) > (time_t)timeout_limit)
         {
             std::cout << "[-] Timeout detected on FD " << fd << ". Cleaning up..." << std::endl;
-
-            /*
-                delete the fd form the epoll_fd kernal list
-                why null in the case of the events
-                why do i close it even the EPOLL_CTL_DEL will close it for me
-            */
             epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-
             close(fd);
-
             raw_client_data.erase(it++);
             remove_fd_from_list(fd);
         }
         else 
-        {
-            // 4. No timeout? Just move to the next one
             ++it;
-        }
     }
 
 }
@@ -127,7 +116,7 @@ void    socket_engine::terminate_client(int fd, std::string stat)
     this->raw_client_data.erase(fd);
     remove_fd_from_list(fd);
     close(fd);
-    std::cerr << stat << std::endl;
+    std::cerr << READ_S << stat << READ_E << std::endl;
 }
 
 void    socket_engine::modify_epoll_event(ssize_t fd, uint32_t events)
@@ -138,38 +127,3 @@ void    socket_engine::modify_epoll_event(ssize_t fd, uint32_t events)
     if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
         std::cerr << "[!] epoll_ctl: " << strerror(errno) << std::endl;
 }
-
-
-
-
-// void response_builder::path_validation() {
-//     // 1. Combine root + request path
-//     this->path = current_client->location_conf->root + current_client->req.getPath();
-
-//     // 2. Check if it's a directory
-//     if (is_directory(this->path)) {
-//         // If the path doesn't end in '/', many servers redirect or fix it
-//         if (this->path[this->path.size() - 1] != '/') this->path += "/";
-
-//         // 3. Look for Index files FIRST
-//         std::string index_file = index_file_iterator(this->path); 
-//         if (!index_file.empty()) {
-//             this->path = index_file; // We found indexx.html!
-//             return; // Exit, handle_get will now serve this file
-//         }
-
-//         // 4. If no index file, check Autoindex
-//         if (current_client->location_conf->autoindex == "on") {
-//             autoindex_page(this->path); // This sets is_body_ready = true
-//             return;
-//         } else {
-//             current_client->res.set_stat_code(FORBIDDEN); // 403
-//             return;
-//         }
-//     }
-    
-//     // 5. If it's a file, check if it exists
-//     if (!file_exists(this->path)) {
-//         current_client->res.set_stat_code(NOT_FOUND); // 404
-//     }
-// }

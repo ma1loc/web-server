@@ -1,4 +1,5 @@
 #include "ConfigPars.hpp"
+#include <vector>
 
 in_addr_t address_resolution(std::string host)
 {
@@ -44,15 +45,58 @@ const ServerBlock* getServerForRequest(const int ip, int port,
     }
     return NULL;
 }
-// ???
-// checks for exact path match in location in case it didnt find it it gives the default one if it exist
-// this function uses prefix matche logic
+
+// std::string path_normalize(const std::string root, std::vector<std::string> path_holder)
+// {
+//     (void)root;
+//     std::string final_url;
+
+//     for (size_t i = 0; i < path_holder.size(); i++) {
+//         final_url.append("/");
+//         final_url.append(path_holder.at(i));
+//     }
+//     std::cout << ">>> request path afterrrrrrrrrrrrrrrrrr >>> " << final_url << std::endl;
+//     return (final_url);
+// }
+
+// std::string   path_resolver(std::string request_path)
+// {
+//     std::string root;
+//     std::string path;
+//     std::vector<std::string> path_holder;
+//     size_t      start = 0;
+//     size_t      end;
+
+//     while ((end = request_path.find("/", start)) != std::string::npos)
+//     {
+//         std::string segment = request_path.substr(start, (end - start));
+//         if (segment == ".." && path_holder.empty()) {
+//             start = end + 1;
+//             continue;
+//         }
+//         else if (segment == "..")
+//             path_holder.pop_back();
+//         else if (!segment.empty())
+//             path_holder.push_back(segment);
+//         start = end + 1;
+//     }
+//     path_holder.push_back(request_path.substr(start));
+//     path = path_normalize(root, path_holder);
+    
+//     return path;
+// }
+
 const LocationBlock* getLocation(const std::string &path, const ServerBlock& srv)
 {
     size_t bestmatch = 0;
     size_t matchedlength = 0;
     const LocationBlock *loc = NULL;
+    // std::string newPath;
 
+    // newPath = path_resolver(path);
+    // if(newPath.empty())
+    //     return NULL;
+    // std::cout << "path : " << newPath << std::endl;
     if (srv.locations.empty())
         return NULL;
     for (size_t i = 0; i < srv.locations.size(); ++i)

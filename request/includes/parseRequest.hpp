@@ -1,6 +1,9 @@
 #ifndef PARSEREQUEST_HPP
 #define PARSEREQUEST_HPP
 
+#define MAX_REQ_SIZE 5000
+#define MAX_HEADER_SIZE 32000
+
 #include <iostream>
 #include <list>
 #include <map>

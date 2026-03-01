@@ -1,4 +1,3 @@
-# include "utils.hpp"
 # include <map>
 # include <fstream>
 # include <iostream>
@@ -7,6 +6,9 @@
 # include <iterator>
 # include <sys/stat.h>
 # include <unistd.h>
+# include "utils.hpp"
+# include "../client.hpp"
+# include "../socket_engine.hpp"
 
 # define MIN_VALID_PORT 1024
 # define MAX_VALID_PORT 65535
@@ -148,7 +150,6 @@ std::string   path_resolver(std::string request_path)
 
 // --------------------------------------------------------------------------------------------
 
-
 unsigned short int  valid_port_number(std::string port_num)
 {
     for (unsigned int i = 0; i < port_num.size(); i++) {
@@ -161,3 +162,65 @@ unsigned short int  valid_port_number(std::string port_num)
         return (0);
     return (port);
 }
+
+// --------------------------------------------------------------------------------------------
+
+extern socket_engine s_engine;
+bool    validate_headers(Client &current_client)
+{
+    std::map<std::string, std::string> header = current_client.req.getHeaders();
+    std::map<std::string, std::string>::iterator it = header.find("HOST");
+
+    current_client.server_conf = NULL;
+    current_client.location_conf = NULL;
+
+    const unsigned long index = it->second.find(":");
+    if (index != std::string::npos)
+    {
+        std::string host = it->second.substr(0, index);
+        std::string port = it->second.substr((index + 1));
+
+        current_client.host = address_resolution(host);
+        if (current_client.host == INADDR_NONE)  // invalid host
+            current_client.host = 0;
+
+        current_client.port = valid_port_number(port);
+        if (!current_client.port)    // invalid port
+            current_client.port = 0;
+
+        if (current_client.port != 0 && current_client.host != INADDR_NONE)
+        {
+            current_client.config_file_info.setServerForRequest(current_client.host, 8088, s_engine.get_server_config_info());
+            current_client.server_conf = current_client.config_file_info.getServer();
+            if (!current_client.server_conf) {
+                current_client.res.set_stat_code(NOT_FOUND);
+                return (false);
+            }
+            current_client.location_conf = current_client.config_file_info.getLocation(current_client.req.getPath());
+            if (!current_client.location_conf)
+            {
+                current_client.res.set_stat_code(NOT_FOUND);
+                return (false);
+            }
+        }
+    }
+    else
+        current_client.res.set_stat_code(NOT_FOUND);
+    return (true);
+}
+
+// CGI --------------------------------------------------------------------------------------------
+
+bool is_cgi_request(std::string path)
+{
+    size_t last_dot = path.find_last_of('.');
+    if (last_dot == std::string::npos)
+        return false;
+
+    std::string ext = path.substr(last_dot);
+    if (ext == ".py" || ext == ".php")
+        return true; 
+    return false;
+}
+
+// --------------------------------------------------------------------------------------------

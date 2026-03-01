@@ -4,7 +4,7 @@
 # include <map>
 # include <string>
 # include <vector>
-# include "config_parsing/ConfigPars.hpp"
+# include "config_parsing/includes/ConfigPars.hpp"
 
 # define OK 200
 # define BAD_REQUEST 400
@@ -18,27 +18,6 @@
 
 # define REQ_NOT_READY 0
 # define PROTOCOL_VERSION   "HTTP/1.0"
-
-// PATH REQUEST TEST
-// # define PATH0  "/www/index.html"                                        // PASS
-# define PATH0  "/www/../"                                        // PASS
-// # define PATH0  "/www/../www"                                            // PASS
-// # define PATH0  "/www/../www/index.html"                                 // PASS
-// # define PATH0  "/www/../www/secret.html"                                // PASS
-// # define PATH0  "/www/../../../../../yanflous/Documents/index.html"      // PASS
-// ------------------------------------------------------
-// request normalization test
-// # define PATH0  "/./www/index.html"
-// # define PATH0  "/./www//index.html"
-// # define PATH0  "//www//index.html"
-// # define PATH0  "./www/index.html"
-// ------------------------------------------------------
-// # define PATH0  "/www"                                                   // PASS
-// # define PATH0  "/www/"                                                  // PASS
-// # define PATH0   "www/secret.html"                                       // PASS
-// # define PATH0   "www/my%20file.html"                                    // NOT-YET
-// ------------------------------------------------------
-
 
 class response  // DONE[]
 {
