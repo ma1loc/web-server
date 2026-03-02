@@ -1,4 +1,5 @@
 #include "../includes/ConfigPars.hpp"
+#include <unistd.h>
 
 void handle_client_mbs(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
     std::string& keyword)
@@ -108,28 +109,37 @@ void handle_redirections(std::deque<Token>& tokenContainer, LocationBlock& loc, 
     }
 }
 
+bool    is_cgi_path_valid(std::string interpreter_path)
+{
+    if (access(interpreter_path.c_str(), F_OK | X_OK) < 0)
+        return (false);
+    return (true);
+}
+
 void handle_cgi(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
     std::string& keyword)
 {
-    (void)countARG;
     (void)keyword;
+    countARG = 0;
+    std::string key;
+    std::string value;
 
-    if (tokenContainer[i].value == "cgi_extension")
+    i++;
+    while(tokenContainer[i].value != ";")
     {
-        i++;
-        while(i < (ssize_t)tokenContainer.size() && tokenContainer[i].type == 1)
+        if (tokenContainer[i].value.find_first_of('.') == std::string::npos)
+            error_line(": the extension is not valid must start with '.'", tokenContainer[i].line);
+        key = tokenContainer[i].value;
+        if (tokenContainer[i + 1].value != ";")
         {
-            loc.cgi_extension.push_back(tokenContainer[i].value);
             i++;
-        }
-    }else if (tokenContainer[i].value == "cgi_path")
-    {
+            value = tokenContainer[i].value;
+            if (!is_cgi_path_valid(value))
+                error_line(": the cgi path in not valid", tokenContainer[i].line);
+        }else
+            error_line(": the cgi path in not valid", tokenContainer[i].line);
+        loc.cgi_handler.insert(std::make_pair(key, value));
         i++;
-        while(i < (ssize_t)tokenContainer.size() && tokenContainer[i].type == 1)
-        {
-            loc.cgi_path.push_back(tokenContainer[i].value);
-            i++;
-        }
     }
 }
 

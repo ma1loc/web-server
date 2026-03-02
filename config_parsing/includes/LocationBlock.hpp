@@ -15,8 +15,7 @@ struct LocationBlock
     std::deque<std::string> index;
     std::deque<std::string> allow_methods;
     bool autoindex;
-    std::deque<std::string> cgi_extension;
-    std::deque<std::string> cgi_path;
+    std::map<std::string, std::string> cgi_handler;
     std::map<std::deque<int>, std::string> error_page;
 };
 
@@ -35,5 +34,7 @@ void extracting_blocks_plus_final_checks(std::deque<Token>& tokenContainer, std:
 void handle_redirections(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
 std::string& keyword);
 
+//cgi path check
+bool    is_cgi_path_valid(std::string interpreter_path);
 
 #endif

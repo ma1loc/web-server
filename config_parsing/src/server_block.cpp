@@ -26,8 +26,8 @@ void extracting_values_from_server_block(std::deque<Token>& tokenContainer, bool
         insideLoc = true;
     else if (insideLoc && (tokenContainer[i].value == "listen" || tokenContainer[i].value == "server_name" || tokenContainer[i].value == "error_page"))
             error_line(": listen, server_name, client_mbs and error_pages must be inside server block not location", tokenContainer[i].line);
-    else if (!insideLoc && (tokenContainer[i].value == "autoindex" || tokenContainer[i].value == "return" || tokenContainer[i].value == "cgi_path" ||
-            tokenContainer[i].value == "cgi_extension" || tokenContainer[i].value == "allow_methods"))
+    else if (!insideLoc && (tokenContainer[i].value == "autoindex" || tokenContainer[i].value == "return" ||
+                tokenContainer[i].value == "cgi_handler" || tokenContainer[i].value == "allow_methods"))
             error_line(": location only keyword inside server block", tokenContainer[i].line);
 }
 
