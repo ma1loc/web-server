@@ -1,4 +1,4 @@
-#include "ConfigPars.hpp"
+#include "../includes/ConfigPars.hpp"
 
 int count_to_symbol(std::deque<Token>& tokenContainer, ssize_t& index, int count)
 {
@@ -17,9 +17,13 @@ void error_line(std::string msg, int Line)
     std::string errorLine;
     std::stringstream ss;
 
-    ss << Line;
-    errorLine = "ERROR on line " + ss.str() + msg;
-    throw std::runtime_error(errorLine);
+    if (Line != -1)
+    {
+        ss << Line;
+        errorLine = "ERROR on line " + ss.str() + msg;
+        throw std::runtime_error(errorLine);
+    }else
+        throw std::runtime_error("ERROR" + msg);
 }
 
 void duplicate_check(std::deque<std::string>& keywords, std::string name)
@@ -40,16 +44,18 @@ void duplicate_check(std::deque<std::string>& keywords, std::string name)
 void checking_for_keyword_dups(std::deque<Token>& tokenContainer)
 {
     std::deque<std::string> keywords;
+    std::vector<std::string> non_duplicated_keyword;
 
     for (size_t i = 0; i < tokenContainer.size(); i++)
     {
         if (tokenContainer[i].type == 0)
             keywords.push_back(tokenContainer[i].value);
     }
-    duplicate_check(keywords, "listen");
-    // duplicate_check(keywords, "client_max_body_size");
-    duplicate_check(keywords, "server_name");
-    duplicate_check(keywords, "host");
+    non_duplicated_keyword.push_back("listen");
+    non_duplicated_keyword.push_back("server_name");
+    non_duplicated_keyword.push_back("host");
+    for(size_t i = 0; i < non_duplicated_keyword.size(); i++)
+        duplicate_check(keywords, non_duplicated_keyword[i]);
 }
 
 template <typename T>
@@ -63,11 +69,10 @@ void inherit_check(T& member, T& defaultValue, const std::string& fieldName)
     }
 }
 
-template <typename T>
-void empty_values_check(T& member, const std::string& fieldName)
+void empty_values_check(ServerBlock&  Serv)
 {
-    if (member.empty())
-        throw std::runtime_error("ERROR: missing value (" + fieldName + ")");
+    if (Serv.error_page.empty() || Serv.host.empty() || Serv.index.empty())
+        throw std::runtime_error("ERROR: missing value (error_page, host or index)");
 }
 
 
@@ -83,11 +88,8 @@ void checking_values(ServerBlock& Serv)
         throw std::runtime_error("ERROR: port has incorrect value must be between 1024 and 65535");
     else if (Serv.client_max_body_size < 0 || !Serv.client_max_body_size)
         throw std::runtime_error("ERROR: client_max_body_size has incorrect value");
-    empty_values_check(Serv.error_page, "error_page");
-    empty_values_check(Serv.host, "host");
-    empty_values_check(Serv.index, "index");
-    // else if (Serv.server_name.empty())
-    //     throw std::runtime_error("ERROR: server_name has incorrect value");
+    //checking empty values
+    empty_values_check(Serv);
     // these values will have a default if they dont exist
     for (size_t i = 0; i < Serv.locations.size(); i++)
     {
@@ -127,29 +129,3 @@ void checking_for_virtual_hosts(std::deque<int>& seen)
             throw std::runtime_error("ERROR: there must be only unique ports per server block");
     }
 }
-
-// used to check only for two server with both same port and ip or server name
-// void checking_for_virtual_hosts(std::multimap<int, std::string>& seen, std::string& msg)
-// {
-//     size_t key = 0;
-//     size_t count = 0;
-//     std::string value;
-
-//     for (std::map<int, std::string>::iterator it = seen.begin();
-//         it != seen.end(); ++it)
-//     {
-//         count = 0;
-//         key = it->first;
-//         value = it->second;
-//         std::multimap<int, std::string>::iterator lower = seen.lower_bound(key);
-//         std::multimap<int, std::string>::iterator upper = seen.upper_bound(key);
-//         for (std::map<int, std::string>::iterator it = lower;
-//             it != upper; ++it)
-//         {
-//             if (value == it->second)
-//                 count++;
-//         }
-//         if (count > 1)
-//             throw std::runtime_error(msg);
-//     }
-// }
