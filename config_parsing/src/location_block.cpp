@@ -10,8 +10,7 @@ void handler_caller(std::map<std::string, handler>& handler_map)
     handler_map["error_page"] = &handle_redirections;
     handler_map["allow_methods"] = &handle_allow_methods;
     handler_map["autoindex"] = &handle_autoindex;
-    handler_map["cgi_extension"] = &handle_cgi;
-    handler_map["cgi_path"] = &handle_cgi;
+    handler_map["cgi_handler"] = &handle_cgi;
 }
 
 bool brackets_count(std::string value, ssize_t& keepCountOfBrase, bool& InsideLocationBlock, std::deque<LocationBlock>& locations,
