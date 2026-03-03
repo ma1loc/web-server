@@ -19,7 +19,7 @@ ServerBlockLookup& ServerBlockLookup::operator=(const ServerBlockLookup& obj) {
 }
 
 // looks for a serverblock in the config file
-void ServerBlockLookup::getServerForRequest(const int ip, const size_t port,
+void ServerBlockLookup::setServerForRequest(const int ip, const size_t port,
     const std::deque<ServerBlock> &serverConfigs
 )
 {
@@ -27,7 +27,7 @@ void ServerBlockLookup::getServerForRequest(const int ip, const size_t port,
     
     if (!ip || !port)
         server = NULL;
-
+    server = NULL;
     for (size_t i = 0; i < serverConfigs.size(); ++i)
     {
         const ServerBlock &srv = serverConfigs[i];
@@ -38,7 +38,6 @@ void ServerBlockLookup::getServerForRequest(const int ip, const size_t port,
             continue;
         server = &srv;
     }
-
 }
 
 const LocationBlock* ServerBlockLookup::getLocation(const std::string &path)
@@ -74,7 +73,7 @@ const LocationBlock* ServerBlockLookup::getLocation(const std::string &path)
 
 ServerBlockLookup::ServerBlockLookup(size_t port, int host, std::deque<ServerBlock> &serverConfigs)
 {
-    getServerForRequest(host, port, serverConfigs);
+    setServerForRequest(host, port, serverConfigs);
 }
 
 const ServerBlock* ServerBlockLookup::getServer()
