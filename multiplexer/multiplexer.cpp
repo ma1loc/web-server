@@ -63,9 +63,9 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             else if (req_stat == OK)    // header ready
             {
                 // -------------------------------------------------------------------------------
+                // exit(1);
                 validate_headers(raw_client_data[fd]);
                 // -------------------------------------------------------------------------------
-
                 response_builder response_builder;
                 response_builder.init_response_builder(raw_client_data[fd]);
 
