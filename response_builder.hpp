@@ -6,7 +6,7 @@
 # include <dirent.h>
 # include <sys/stat.h>
 # include "response.hpp"
-# include "./config_parsing/ConfigPars.hpp"
+# include "./config_parsing/includes/ConfigPars.hpp"
 # include "./socket_engine.hpp"
 # include "client.hpp"
 

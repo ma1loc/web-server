@@ -55,6 +55,7 @@ void response_builder::response_setup()
 
 void response_builder::build_response()
 {
+    // exit(1);
     if (this->current_client->res.get_stat_code() == OK) {
         if (!is_allowd_method(current_client->req.getMethod()))
             this->current_client->res.set_stat_code(METHOD_NOT_ALLOWED);

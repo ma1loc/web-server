@@ -168,24 +168,11 @@ unsigned short int  valid_port_number(std::string port_num)
 extern socket_engine s_engine;
 bool    validate_headers(Client &current_client)
 {
-    // here will parse the header infos needed //
-    /*
-        extract from the request header:
-            Host:
-                based on host will extract:
-                    server-level block
-                    location-level block
-                        based on both:
-                            will get the infos looking for
-                                allowed methodes
-                                max-client-body-size
-                                CGI
-    */
-    // this->server_conf = NULL;
-    current_client.location_conf = NULL;
-
     std::map<std::string, std::string> header = current_client.req.getHeaders();
     std::map<std::string, std::string>::iterator it = header.find("HOST");
+
+    current_client.server_conf = NULL;
+    current_client.location_conf = NULL;
 
     const unsigned long index = it->second.find(":");
     if (index != std::string::npos)
@@ -203,25 +190,19 @@ bool    validate_headers(Client &current_client)
 
         if (current_client.port != 0 && current_client.host != INADDR_NONE)
         {
-            // getLocation
-            current_client.server_conf = getServerForRequest(current_client.host,
-                current_client.port, s_engine.get_server_config_info()); // will match server-level
+            current_client.config_file_info.getServerForRequest(current_client.host, 8088, s_engine.get_server_config_info());
+            current_client.server_conf = current_client.config_file_info.getServer();
             if (!current_client.server_conf) {
                 current_client.res.set_stat_code(NOT_FOUND);
                 return (false);
             }
-            current_client.location_conf = getLocation(current_client.req.getPath(), *current_client.server_conf);
+            current_client.location_conf = current_client.config_file_info.getLocation(current_client.req.getPath());
             if (!current_client.location_conf)
             {
                 current_client.res.set_stat_code(NOT_FOUND);
                 return (false);
             }
         }
-        // this->current_client->location_conf->allow_methods
-        // this->current_client->location_conf->client_max_body_size
-        // this->current_client->location_conf->cgi_extension
-        // this->current_client->location_conf->cgi_path
-        // this->current_client->location_conf->redirection???????
     }
     else
         current_client.res.set_stat_code(NOT_FOUND);
@@ -243,10 +224,3 @@ bool is_cgi_request(std::string path)
 }
 
 // --------------------------------------------------------------------------------------------
-
-bool    is_cgi_path_valid(std::string interpreter_path)
-{
-    if (access(interpreter_path.c_str(), F_OK | X_OK) < 0)
-        return (false);
-    return (true);
-}

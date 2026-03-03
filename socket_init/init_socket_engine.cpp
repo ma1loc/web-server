@@ -73,10 +73,16 @@ void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config
     this->server_config_info = server_config_info;
 }
 
-void socket_engine::check_all_client_timeouts(void)
+// ServerBlockLookup server(port, host, server_config_info);
+// // const ServerBlock *server_conf = getServerForRequest(host, port, server_config_info);
+// const ServerBlock *server_conf = server.getServer();
+// const LocationBlock*loc = server.getLocation("path");
+
+void socket_engine::check_all_client_timeouts(void) // TODO-CHECK
 {
     time_t now = time(0);
     std::map<int, Client>::iterator it = raw_client_data.begin();
+    ServerBlockLookup server_conf_block;
 
     while (it != raw_client_data.end()) 
     {
@@ -85,13 +91,8 @@ void socket_engine::check_all_client_timeouts(void)
         int host = it->second.host;
         size_t timeout_limit = TIMEOUT_LIMIT;
         
-        // // ----------------------------------------------------------
-        // std::cout << "it->first -> " << it->first << std::endl;
-        // std::cout << "port -> " << port << std::endl;
-        // std::cout << "host -> " << it->second.host << std::endl;
-        // // ---------------------------------------------------------- 
-
-        const ServerBlock *server_conf = getServerForRequest(host, port, server_config_info);
+        server_conf_block.getServerForRequest(host, port, server_config_info);
+        const ServerBlock * server_conf = server_conf_block.getServer();
         if (server_conf != NULL)
             timeout_limit = server_conf->set_timeout;
 

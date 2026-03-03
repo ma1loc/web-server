@@ -26,6 +26,9 @@ struct Client
     unsigned int        host;
 
     /// get the location-level match
+
+    // ServerBlockLookup
+    ServerBlockLookup       config_file_info;
     const ServerBlock       *server_conf;
     const LocationBlock     *location_conf;
 
