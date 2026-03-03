@@ -12,7 +12,7 @@ class ServerBlockLookup {
         const ServerBlock* server;
     public:
         ServerBlockLookup();
-        void getServerForRequest(const int ip, const size_t port,
+        void setServerForRequest(const int ip, const size_t port,
             const std::deque<ServerBlock> &serverConfigs);
         ServerBlockLookup(size_t port, int host, std::deque<ServerBlock> &serverConfigs);
         ServerBlockLookup(const ServerBlockLookup& obj);
