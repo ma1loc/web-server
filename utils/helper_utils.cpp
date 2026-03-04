@@ -190,7 +190,8 @@ bool    validate_headers(Client &current_client)
 
         if (current_client.port != 0 && current_client.host != INADDR_NONE)
         {
-            current_client.config_file_info.setServerForRequest(current_client.host, 8088, s_engine.get_server_config_info());
+            current_client.config_file_info.setServerForRequest(current_client.host,
+                current_client.port, s_engine.get_server_config_info());
             current_client.server_conf = current_client.config_file_info.getServer();
             if (!current_client.server_conf) {
                 current_client.res.set_stat_code(NOT_FOUND);
@@ -224,3 +225,14 @@ bool is_cgi_request(std::string path)
 }
 
 // --------------------------------------------------------------------------------------------
+
+void    correct_dir_path(const std::string &full_dir_path, std::string &d_path)
+{
+    struct stat statbuf;
+    
+    stat(full_dir_path.c_str(), &statbuf);
+    if (S_ISDIR(statbuf.st_mode) && d_path.at(d_path.size() - 1) != '/') {
+        if (d_path.at(d_path.size() - 1) != '/')
+            d_path.append("/");
+    }
+}
