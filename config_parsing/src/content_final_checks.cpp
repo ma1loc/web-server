@@ -27,23 +27,6 @@ void duplicate_check(std::deque<std::string>& keywords, std::string name)
     }
 }
 
-void checking_for_keyword_dups(std::deque<Token>& tokenContainer)
-{
-    std::deque<std::string> keywords;
-    std::vector<std::string> non_duplicated_keyword;
-
-    for (size_t i = 0; i < tokenContainer.size(); i++)
-    {
-        if (tokenContainer[i].type == 0)
-            keywords.push_back(tokenContainer[i].value);
-    }
-    non_duplicated_keyword.push_back("listen");
-    non_duplicated_keyword.push_back("server_name");
-    non_duplicated_keyword.push_back("host");
-    for(size_t i = 0; i < non_duplicated_keyword.size(); i++)
-        duplicate_check(keywords, non_duplicated_keyword[i]);
-}
-
 template <typename T>
 void inherit_check(T& member, T& defaultValue, const std::string& fieldName)
 {
