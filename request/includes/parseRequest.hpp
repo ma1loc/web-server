@@ -4,6 +4,9 @@
 #define MAX_REQ_SIZE           5000
 #define MAX_SINGLE_HEADER_SIZE 8000
 #define MAX_HEADER_SIZE        32000
+#define MAX_CHUNK_SIZE         8000
+#define URI_TOO_LARGE          414
+#define HEADER_TOO_LARGE       431
 
 #include <iostream>
 #include <list>
