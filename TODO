@@ -1,0 +1,13 @@
+GET -> serving static or CGI files
+POST -> learn about it
+DELETE -> implement, learn about it
+CGI -> learn about it:
+    - what is it, how it works, how to make it
+    - things to avoid
+    - what is the relation between CGI and Multiplexer
+    - can i have a CGI in POST body
+    - POST CGI only happen in post if it's there uploded a file
+
+later on:
+    Session
+    Cookes

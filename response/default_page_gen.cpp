@@ -107,7 +107,7 @@ void    response_builder::autoindex_gen(std::vector<std::string> &dir_list, cons
 
         path += name;
         full_dir_path = full_path + name;
-        correct_dir_path(full_dir_path ,path);
+        dir_path_correction(full_dir_path ,path);
 
         this->body.append("\t\t<a href=\"" + path + "\">" + name + "</a><br>\n");
     }

@@ -42,6 +42,7 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
     static std::map<int, std::string> stat_code_str;
     if (stat_code_str.empty()) {
         stat_code_str[200] = "OK";
+        stat_code_str[204] = "No Content";
         stat_code_str[403] = "Forbidden";
         stat_code_str[404] = "Not Found";
         stat_code_str[405] = "Method Not Allowed";
@@ -124,7 +125,6 @@ std::string path_normalize(std::vector<std::string> path_holder)
 std::string   path_resolver(std::string request_path)
 {
     std::string root;
-    // std::string path;
 
     std::vector<std::string> path_holder;
     size_t      start = 0;
@@ -212,7 +212,7 @@ bool    validate_headers(Client &current_client)
 
 // CGI --------------------------------------------------------------------------------------------
 
-bool is_cgi_request(std::string path)
+bool    is_cgi_request(std::string path)
 {
     size_t last_dot = path.find_last_of('.');
     if (last_dot == std::string::npos)
@@ -226,7 +226,7 @@ bool is_cgi_request(std::string path)
 
 // --------------------------------------------------------------------------------------------
 
-void    correct_dir_path(const std::string &full_dir_path, std::string &d_path)
+void    dir_path_correction(const std::string &full_dir_path, std::string &d_path)
 {
     struct stat statbuf;
     

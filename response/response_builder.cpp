@@ -9,14 +9,14 @@ void    response_builder::init_response_builder(Client &current_client) {
     this->current_client = &current_client;
 }
 
-bool    response_builder::is_allowd_method(std::string method)
-{
-    for (size_t i = 0; i < current_client->location_conf->allow_methods.size(); i++) {
-        if (current_client->location_conf->allow_methods.at(i) == method)
-            return (true);
-    }
-    return (false);
-}
+// bool    response_builder::is_allowd_method(std::string method)
+// {
+//     for (size_t i = 0; i < current_client->location_conf->allow_methods.size(); i++) {
+//         if (current_client->location_conf->allow_methods.at(i) == method)
+//             return (true);
+//     }
+//     return (false);
+// }
 
 std::string response_builder::index_file_iterator(const std::string &full_path)
 {
@@ -33,6 +33,7 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
     return ("");
 }
 
+// TODO-LATER: Methode not allowed
 void response_builder::build_response()
 {
     std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
@@ -43,7 +44,6 @@ void response_builder::build_response()
     std::cout << "STATUS CODE " << current_client->res.get_stat_code() << std::endl;
     if (this->current_client->res.get_stat_code() != OK) {
         generate_error_page();
-        // exit(1);
     }
 
     else if (this->current_client->req.getMethod() == GET_METHODE)

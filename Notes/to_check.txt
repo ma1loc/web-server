@@ -1,0 +1,395 @@
+➜  web-server git:(main) ✗ ls
+all_in_one.cpp  main.cpp  Makefile  multiplexeur  README.md  response_builder.hpp  socket_engine.hpp  TODO   webserv
+config_parsing  main.o    methodes  Notes         response   response.hpp          socket_init        utils  www
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf 
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root /;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ that the config file that i will depende on it to test the path resolver 
+zsh: command not found: that
+➜  web-server git:(main) ✗ make                                     
+make: Nothing to be done for 'all'.
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> /
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/index.html
+>>> request path afterrrrrrrrrrrrrrrrrr >>> //www/index.html
+the NEW full_path -> //www/index.html
+>>>>>>>>>> STATUS CODE: 404 <<<<<<<<<<
+path empty here >>> //www/index.html
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 0 bytes from fd 6
+--------------------------------------------------------------
+[>] list befor
+fd=5 fd=6 fd=7 
+[>] list after
+fd=5 fd=7 
+--------------------------------------------------------------
+[!] Client lost connection
+^C>>> free fd[5]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[7]
+➜  web-server git:(main) ✗ here it failed becouse there's no www in the / root, but i will change the root form / to ./
+➜  web-server git:(main) ✗ make
+make: Nothing to be done for 'all'.
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf    
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root ./;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> ./
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/index.html
+>>> request path afterrrrrrrrrrrrrrrrrr >>> .//www/index.html
+the NEW full_path -> .//www/index.html
+>>>>>>>>>> STATUS CODE: 200 <<<<<<<<<<
+path empty here >>> .//www/index.html
+[>] Request incoming from Server FD: 5
+^C>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+➜  web-server git:(main) ✗ and he we go it's vaalid path and it's okay, i will try another one with move ../../
+➜  web-server git:(main) ✗ make                                 
+c++ -std=c++98  -Wall -Wextra -Werror -fsanitize=address -c response/response_builder.cpp -o response/response_builder.o
+c++ -std=c++98  -Wall -Wextra -Werror -fsanitize=address -o webserv ./main.o ./socket_init/init_socket_engine.o ./socket_init/init_client_side.o ./socket_init/init_server_side.o ./multiplexeur/multiplexeur.o ./config_parsing/extracting_values.o ./config_parsing/content_final_checks.o ./config_parsing/get_values.o ./config_parsing/location_block.o ./config_parsing/server_block.o ./config_parsing/syntax_validation.o ./response/response_builder.o ./response/response.o ./response/default_page_gen.o ./utils/helper_utils.o
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root ./;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> ./
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/../../../../../yanflous/Documents/index.html
+!path_resolver() is failed
+>>>>>>>>>> STATUS CODE: 403 <<<<<<<<<<
+path empty here >>> 
+[>] Request incoming from Server FD: 5
+^C>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+➜  web-server git:(main) ✗ it match the /www in my config file but i call the resolve path to count the levels to know if valid navigation or not
+➜  web-server git:(main) ✗ make 
+make: Nothing to be done for 'all'.
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root /;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> /
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/../../../../../yanflous/Documents/index.html
+!path_resolver() is failed
+>>>>>>>>>> STATUS CODE: 403 <<<<<<<<<<
+path empty here >>> 
+[>] Request incoming from Server FD: 5
+^C>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+➜  web-server git:(main) ✗ here i will test an edge case and most be valid just in one case root has ./ not / , i will test both
+➜  web-server git:(main) ✗ make
+c++ -std=c++98  -Wall -Wextra -Werror -fsanitize=address -c response/response_builder.cpp -o response/response_builder.o
+c++ -std=c++98  -Wall -Wextra -Werror -fsanitize=address -o webserv ./main.o ./socket_init/init_socket_engine.o ./socket_init/init_client_side.o ./socket_init/init_server_side.o ./multiplexeur/multiplexeur.o ./config_parsing/extracting_values.o ./config_parsing/content_final_checks.o ./config_parsing/get_values.o ./config_parsing/location_block.o ./config_parsing/server_block.o ./config_parsing/syntax_validation.o ./response/response_builder.o ./response/response.o ./response/default_page_gen.o ./utils/helper_utils.o
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root /;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> /
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/../www/index.html
+>>> request path afterrrrrrrrrrrrrrrrrr >>> //www/index.html
+the NEW full_path -> //www/index.html
+>>>>>>>>>> STATUS CODE: 404 <<<<<<<<<<
+path empty here >>> //www/index.html
+[>] Request incoming from Server FD: 5
+^C>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+➜  web-server git:(main) ✗ okay good the /www is not in the root is in the local files of websirve
+➜  web-server git:(main) ✗ ls
+all_in_one.cpp  main.cpp  Makefile  multiplexeur  README.md  response_builder.hpp  socket_engine.hpp  TODO   webserv
+config_parsing  main.o    methodes  Notes         response   response.hpp          socket_init        utils  www
+➜  web-server git:(main) ✗ make
+make: Nothing to be done for 'all'.
+➜  web-server git:(main) ✗ cat ./config_parsing/config_file.conf
+server {
+    listen 8080;
+    host 127.0.0.1;
+    root www/;
+    client_max_body_size 4000000;
+	index index.html;
+    error_page 404 asdfasdf/404.html;
+    error_page 402 error_asdfasdfpages/404.html;
+
+    location /www {
+        root ./;
+        autoindex on;
+        index index.html;
+        allow_methods GET;
+    }
+}
+➜  web-server git:(main) ✗ ./webserv config_parsing/config_file.conf
+socket_engine successfully ready!
+[+] SERVER SETUP #1
+[>] Request incoming from Server FD: 5
+[>] Data incoming from Client FD: 6
+Received 696 bytes from fd 6
+[>] Received 696 bytes from fd 6
+[>] --- DATA START ---
+GET / HTTP/1.1
+Host: 127.0.0.1:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-US,en;q=0.9,fr;q=0.8,ar;q=0.7
+
+
+--- DATA END ---
+>>>>>>>>>>> ENTTTERRRRR <<<<<<<<<<<<
+path of getLocation -> /www
+>>> root path >>> ./
+>>> request path beforrrrrrrrrrrrrrrrr >>> /www/../www/index.html
+>>> request path afterrrrrrrrrrrrrrrrrr >>> .//www/index.html
+the NEW full_path -> .//www/index.html
+>>>>>>>>>> STATUS CODE: 200 <<<<<<<<<<
+path empty here >>> .//www/index.html
+[>] Request incoming from Server FD: 5
+^C>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+[!] SIGINT interrupt, END :(
+>>> free fd[5]
+>>> free fd[6]
+>>> free fd[7]
+➜  web-server git:(main) ✗ he we fucking gooo
+➜  web-server git:(main) ✗ 
+

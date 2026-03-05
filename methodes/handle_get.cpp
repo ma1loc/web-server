@@ -52,3 +52,4 @@ void    response_builder::handle_get()  // OK request
     set_header();
     set_body();
 }
+

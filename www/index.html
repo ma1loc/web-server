@@ -33,14 +33,14 @@
     <!-- DELETE -->
     <div class="box">
         <h3>3. DELETE Test</h3>
-        <p>Clicking this will send a <code>DELETE</code> request for <code>/delete_me.txt</code>.</p>
+        <p>Clicking this will send a <code>DELETE</code> request for <code>delete_me.txt</code>.</p>
         <button class="delete-btn" onclick="sendDelete()">Delete test_file.txt</button>
         <p id="deleteStatus"></p>
     </div>
 
     <script>
         async function sendDelete() {
-            const res = await fetch('/delete_me.txt', { method: 'DELETE' });
+            const res = await fetch('delete_me.txt', { method: 'DELETE' });
             if (res.status === 204)
                 window.location.reload();
             else {

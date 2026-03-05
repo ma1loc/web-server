@@ -54,12 +54,12 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
 
             // std::cout << "-----REQUEST " << raw_data_buff << "-----REQUEST " << std::endl;
 
-            int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);            
+            int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
             if (req_stat == REQ_NOT_READY)  // request not ready
                 return ;
             else if (req_stat == OK)    // request ready
             {
-                validate_headers(raw_client_data[fd]);  // rm-me
+                validate_headers(raw_client_data[fd]);
 
                 // -------------------------------------------------------------------------------
                 std::cout << READ_S << "--------- START REQUEST\n" << raw_data_buff << "\n------- END RAQUEST" << READ_E << std::endl;

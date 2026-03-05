@@ -45,8 +45,6 @@ void    response_builder::path_validation()
     {   
         std::cout << "[+] DIR REQUESTED HEEEEEEEEEEEEEREEEEEEEEEE" << std::endl;
 
-        // correct_dir_path(this->path);   // TODO-CHECK
-
         index = index_file_iterator(this->path);
         if (!index.empty())     // here will server the static files .html
             this->path = index;

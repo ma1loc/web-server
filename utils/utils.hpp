@@ -15,6 +15,7 @@ std::string                 path_normalize(std::vector<std::string> path_holder)
 std::string                 path_resolver(std::string request_path);
 std::vector<std::string>    host_splite(std::string Host);
 unsigned short int          valid_port_number(std::string port_num);
-void                        correct_dir_path(const std::string &full_dir_path, std::string &d_path);
+void                        dir_path_correction(const std::string &full_dir_path, std::string &d_path);
+void                        normalisePath(std::string &path, std::string target, std::string rep, size_t size);
 
 # endif
