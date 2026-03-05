@@ -51,7 +51,7 @@ bool checkForMethod(Client &client)
         {
             if (flag)
                 return false;
-            int length = strToBase(it->second, 10000000, "0123456789");
+            int length = strToBase(it->second, client.location_conf->client_max_body_size, "0123456789");
             // TODO : add the config file max body later
             if (length == -1)
                 return false;
@@ -96,8 +96,10 @@ int collectBodyByChunks(Client &client, std::string &remain)
             if (end == std::string::npos)
                 return REQ_NOT_READY;
             std::string bytesLine = remain.substr(0, end);
+            if (bytesLine.size() > MAX_CHUNK_SIZE)
+                return BAD_REQUEST;
             UpperCaseBodyBytes(bytesLine);
-            int bytes = strToBase(bytesLine, 10000000, "0123456789ABCDEF");
+            int bytes = strToBase(bytesLine, client.location_conf->client_max_body_size, "0123456789ABCDEF");
             if (bytes == -1)
                 return BAD_REQUEST;
             remain.erase(0, end + 2);
@@ -119,6 +121,8 @@ int collectBodyByChunks(Client &client, std::string &remain)
                 else
                 {
                     client.req.appendBody(remain.substr(0, bytes));
+                    if (client.req.getBody().size() > (size_t)client.location_conf->client_max_body_size)
+                        return PAYLOAD_TOO_LARGE;
                     client.parse.chunkState = CALCULATING;
                     remain.erase(0, bytes + 2);
                 }

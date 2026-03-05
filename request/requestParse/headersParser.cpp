@@ -74,64 +74,72 @@ bool checkForDouble(
     return header.find(key) == header.end();
 }
 
-bool parseToken(
+int parseToken(
     std::string token, std::map<std::string, std::string> &headers, bool &host
 )
 {
     if (token.size() > MAX_SINGLE_HEADER_SIZE)
-        return false;
+        return HEADER_TOO_LARGE;
     size_t pos = token.find(":");
     if (pos == std::string::npos)
-        return false;
+        return BAD_REQUEST;
     std::string name = token.substr(0, pos);
     if (!checkNameField(name))
-        return false;
+        return BAD_REQUEST;
     UpperCaseHeaderName(name);
     if (!checkForDouble(name, headers))
-        return false;
+        return BAD_REQUEST;
     std::string value = token.substr(pos + 1);
     trimLeft(value, "\t ");
     if (!checkValueField(value))
-        return false;
+        return BAD_REQUEST;
     if (name == "HOST")
         host = true;
     headers[name] = value;
-    return true;
+    return 0;
 }
 
-bool checkSetHeaders(int hn, Client &client, std::map<int, std::string> &tokens)
+int checkSetHeaders(int hn, Client &client, std::map<int, std::string> &tokens)
 {
     bool                               host = false;
+    int                                ERROR;
     std::map<std::string, std::string> headers;
     for (int i = 0; i < hn; i++)
     {
-        if (!parseToken(tokens[i], headers, host))
-            return false;
+        ERROR = parseToken(tokens[i], headers, host);
+        if (ERROR)
+            return ERROR;
     }
     if (!host)
-        return false;
+        return BAD_REQUEST;
     client.req.setHeader(headers);
-    return true;
+    return 0;
 }
 
-// int checkMethodAllowed(Client &client)
-// {
-//     for(int i = 0;i < 3;i++)
-//     {
-//         if (client.req.getMethod() == client.location_conf->allow_methods[i])
+bool checkMethodAllowed(Client &client)
+{
 
-//     }
-//     return 1;
-// }
+    std::deque<std::string>::const_iterator it =
+        client.location_conf->allow_methods.begin();
+    for (; it != client.location_conf->allow_methods.end(); it++)
+    {
+        if (client.req.getMethod() == *it)
+            return true;
+    }
+    return false;
+}
 
 int parseHeaders(Client &client, std::string &data)
 {
     std::map<int, std::string> tokens;
     int                        NumberOfTokens = splitDataToTokens(data, tokens);
-
-    if (!checkSetHeaders(NumberOfTokens, client, tokens))
-        return BAD_REQUEST;
+    int                        ERROR;
+    ERROR = checkSetHeaders(NumberOfTokens, client, tokens);
+    if (ERROR)
+        return ERROR;
     if (!validate_headers(client))
         return NOT_FOUND;
+    if (!checkMethodAllowed(client))
+        return METHOD_NOT_ALLOWED;
     return 1;
 }
