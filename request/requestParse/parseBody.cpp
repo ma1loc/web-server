@@ -52,7 +52,6 @@ bool checkForMethod(Client &client)
             if (flag)
                 return false;
             int length = strToBase(it->second, client.location_conf->client_max_body_size, "0123456789");
-            // TODO : add the config file max body later
             if (length == -1)
                 return false;
             else
@@ -74,7 +73,7 @@ bool checkForMethod(Client &client)
 }
 
 int collectBodyByLength(Client &client)
-{
+{ 
     if (client.parse.remaining.size() >= (size_t)client.parse.contentLength)
     {
         client.req.setBody(
@@ -160,3 +159,4 @@ int parseBody(Client &client)
     }
     return 0;
 }
+
