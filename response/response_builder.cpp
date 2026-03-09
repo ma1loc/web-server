@@ -36,8 +36,8 @@ std::string response_builder::index_file_iterator(const std::string &full_path)
 // TODO-LATER: Methode not allowed
 void response_builder::build_response()
 {
-    std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
-    std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
+    // std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
+    // std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
 
     path_validation();  // TOKNOW: auto-index gen
     

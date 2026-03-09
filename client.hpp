@@ -12,6 +12,11 @@
 # define READ_S "\033[31m"
 # define READ_E "\033[0m"
 
+// default extansion in case (No name, No content-type)
+# define DEFAULT_EXTENSION ".txt"
+// how the browser threat the data
+# define DEFAULT_MEDIA_TYPE "text/plain"
+
 class Request;
 struct reqParse;
 

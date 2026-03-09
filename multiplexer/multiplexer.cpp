@@ -66,7 +66,6 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             
             // -------------------------------------------------------------------------------
             std::map<std::string, std::string> x = raw_client_data[fd].req.getHeaders();
-            
             for (std::map<std::string, std::string>::iterator it = x.begin(); it != x.end(); it++)
             {
                 std::cout << "key: " << it->first << " value: " << it->second << std::endl;
