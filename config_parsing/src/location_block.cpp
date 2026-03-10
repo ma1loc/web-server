@@ -11,6 +11,7 @@ void handler_caller(std::map<std::string, handler>& handler_map)
     handler_map["allow_methods"] = &handle_allow_methods;
     handler_map["autoindex"] = &handle_autoindex;
     handler_map["cgi_handler"] = &handle_cgi;
+    handler_map["root"] = &handle_location_block_root;
 }
 
 bool brackets_count_and_keyword_check(std::string value, ssize_t& keepCountOfBrase, bool& InsideLocationBlock, std::deque<LocationBlock>& locations,
@@ -65,8 +66,6 @@ void extracting_location_blocks(std::deque<Token>& tokenContainer , ServerBlock&
                 else if ((i + 1) < (ssize_t)tokenContainer.size() && (pos = tokenContainer[i].value.find_first_of("/")) != 0
                     && tokenContainer[i + 1].value == "{")
                     error_line(": paths must start with /", tokenContainer[i].line);
-                else if (i < (ssize_t)tokenContainer.size() && tokenContainer[i].value == "root")
-                    loc.root = tokenContainer[i + 1].value;
                 else if (handler_map.find(tokenContainer[i].value) != handler_map.end())
                     handler_map[tokenContainer[i].value](tokenContainer, loc, countARG, i, tokenContainer[i].value);
                 i++;
