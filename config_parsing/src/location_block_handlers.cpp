@@ -56,6 +56,19 @@ void handle_index(std::deque<Token>& tokenContainer, LocationBlock& loc, int cou
     }
 }
 
+void handle_location_block_root(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
+    std::string& keyword)
+{
+    (void)countARG;
+    (void)keyword;
+    i++;
+
+    if (tokenContainer[i].value != ";")
+        loc.root = tokenContainer[i].value;
+    else
+        error_line(": root value is missing", tokenContainer[i].line);
+}
+
 // work on it
 void handle_redirections(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
     std::string& keyword)
