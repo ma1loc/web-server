@@ -27,7 +27,7 @@ void handle_allow_methods(std::deque<Token>& tokenContainer, LocationBlock& loc,
     non_duplicated_keyword.push_back("DELETE");
 
     i++;
-    while(i < (ssize_t)tokenContainer.size() && tokenContainer[i].type == 1)
+    while(tokenContainer[i].value != ";")
     {
         if (tokenContainer[i].value == "GET" || tokenContainer[i].value == "POST"
             || tokenContainer[i].value == "DELETE")

@@ -102,7 +102,7 @@ bool& insideLoc)
     i++;
     if (Serv.index.empty() && !insideLoc)
     {
-        while(tokenContainer[i].type == 1)
+        while(tokenContainer[i].value != ";")
         {
             Serv.index.push_back(tokenContainer[i].value);
             i++;
