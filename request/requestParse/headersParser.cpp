@@ -121,7 +121,7 @@ int checkSetHeaders(int hn, Client &client, std::map<int, std::string> &tokens)
 bool checkMethodAllowed(Client &client)
 {
 
-    std::deque<std::string>::const_iterator it =
+    std::set<std::string>::const_iterator it =
         client.location_conf->allow_methods.begin();
     for (; it != client.location_conf->allow_methods.end(); it++)
     {
