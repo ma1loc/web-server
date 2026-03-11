@@ -153,6 +153,6 @@ bool& insideLoc)
         {
             int code = *it;
             Serv.error_page[code] = value;
-        }
+        } 
     }
 }
