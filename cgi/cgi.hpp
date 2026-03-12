@@ -1,8 +1,26 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#include "../client.hpp"
+#define CGI_TIMEOUT 5
+
 #include <wait.h>
+#include <sys/time.h>
+#include <iostream>
+#include <stdlib.h>
+
+enum cgiState
+{
+    CHECKING,
+    SETUP_CGI,
+    CREAT_PIPES,
+    EXECUTING,
+    CGI_READING,
+    CGI_WAITING,
+    CGI_DONE,
+    ERROR
+};
+
+struct Client;
 
 class Cgi
 {
@@ -15,9 +33,13 @@ class Cgi
     int         pipeOut[2];
     std::string response;
 
+
   public:
+    cgiState state;
     pid_t pid;
     int   status;
+    struct timeval start;
+    struct timeval current;
     
     Cgi();
     Cgi(const Cgi &other);
@@ -38,7 +60,7 @@ class Cgi
     bool creatPipes();
     void childProccess();
     void parantProccess(Client &client);
-    void reading(Client &client);
+    void reading();
 };
 
 #endif

@@ -1,7 +1,11 @@
 #include "cgi.hpp"
+#include "../client.hpp"
+#include "../utils/utils.hpp"
 
 Cgi::Cgi()
 {
+    envp = NULL;
+    argv = NULL;
 }
 
 Cgi::Cgi(const Cgi &other)
@@ -21,12 +25,18 @@ Cgi &Cgi::operator=(const Cgi &other)
 
 Cgi::~Cgi()
 {
-    for (size_t i = 0; envp[i]; i++)
-        free(envp[i]);
-    delete envp;
-    for (size_t i = 0; i < 3; i++)
-        free(argv[i]);
-    delete argv;
+    if (envp)
+    {
+        for (size_t i = 0; envp[i]; i++)
+            free(envp[i]);
+        delete[] envp;
+    }
+    if (argv)
+    {
+        for (size_t i = 0; i < 3; i++)
+            free(argv[i]);
+        delete[] argv;
+    }
 }
 
 void Cgi::setInterpreter(const std::string &interpreter)
@@ -97,7 +107,7 @@ void collectEnv(Client &client, std::vector<std::string> &env)
         "REQUEST_URI=" + client.req.getPath() + client.req.getQuery()
     );
     env.push_back("SERVER_NAME="); // hostname needed later
-    env.push_back("SERVER_PORT=" + client.port);
+    env.push_back("SERVER_PORT=" + to_string(client.port));
     env.push_back("REDIRECT_STATUS=200");
 
     std::map<std::string, std::string> headers      = client.req.getHeaders();
@@ -155,8 +165,8 @@ bool Cgi::creatPipes()
 
 void Cgi::childProccess()
 {
-    dup2(STDIN_FILENO, pipeIn[0]);
-    dup2(STDOUT_FILENO, pipeOut[1]);
+    dup2(pipeIn[0], STDIN_FILENO);
+    dup2(pipeOut[1], STDOUT_FILENO);
 
     close(pipeIn[1]);
     close(pipeIn[0]);
@@ -177,22 +187,31 @@ void Cgi::parantProccess(Client &client)
             pipeIn[1], client.req.getBody().c_str(), client.req.getBody().size()
         );
     close(pipeIn[1]);
+    gettimeofday(&start, NULL);
 }
 
-void Cgi::reading(Client &client)
+void Cgi::reading()
 {
-    if (client.state == CGI_READING)
+    if (state == CGI_READING)
     {
         char buff[1024];
 
         int n = read(pipeOut[0], buff, 1024);
         if (n > 0)
-            response.append(buff);
+            response.append(buff, n);
         else if (n == 0)
-            client.state = CGI_WAITING;
+        {
+            state = CGI_WAITING;
+            close (pipeOut[0]);
+        }
     }
     pid_t wait = waitpid(pid, &status, WNOHANG);
-    if (wait == pid)
-        client.state = CGI_DONE;
-    //need now to add a check for cgi each time for timeout
+    if (wait == pid && state == CGI_WAITING)
+        state = CGI_DONE;
+    gettimeofday(&current, NULL);
+    if (current.tv_sec - start.tv_sec > CGI_TIMEOUT)
+    {
+        kill(pid, SIGTERM);
+        state = ERROR;
+    }
 }
