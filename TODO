@@ -1,12 +1,21 @@
 GET -> serving static or CGI files
 POST -> learn about it
+    - File Uploads: Saving a file to the server (This is purely your job as the server logic).
 DELETE -> implement, learn about it
 CGI -> learn about it:
     - what is it, how it works, how to make it
+    - What about location /cgi-bin mean's?
     - things to avoid
     - what is the relation between CGI and Multiplexer
     - can i have a CGI in POST body
+    - GET has also a CGI request right?
     - POST CGI only happen in post if it's there uploded a file
+    - how to avoid the Blocking Socket when i use waitpid()?
+    - queres giving only in case of GET request not in (POST, DELETE)?
+    - What is the content type of the CGI?
+    - http://10.11.11.6:8080/www/$hello=world what about quere?
+    - how the dup2 handeld in case of the CGI?
+    - is i have to change the secrpte user to a normal one?
 
 later on:
     Session

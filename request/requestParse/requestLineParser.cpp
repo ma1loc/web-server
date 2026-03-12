@@ -2,7 +2,9 @@
 #include "../includes/parseRequest.hpp"
 #include "../includes/request.hpp"
 
-void normalisePath(std::string &path, std::string target, std::string rep, size_t size)
+void normalisePath(
+    std::string &path, std::string target, std::string rep, size_t size
+)
 {
     size_t begin;
     while (true)
@@ -34,7 +36,7 @@ int rangeToken(size_t begin, size_t &end, std::string &data)
 
 bool splitDataToTokens(std::string data, std::map<int, std::string> &tokens)
 {
-    size_t end = 0;
+    size_t end   = 0;
     size_t begin = 0;
 
     for (int i = 0; i < 3; i++)
@@ -69,17 +71,19 @@ bool checkSetMethod(std::string &token, Client &client, std::string *methods)
 
 bool checkSetPathQuery(Client &cleint, std::string &data)
 {
-    // TODO : need to know if query should be flaged exist or not later
     if (data[0] != '/')
         return false;
     if (data.find('\r') != std::string::npos ||
         data.find('\n') != std::string::npos)
         return false;
+    size_t frag = data.find('#');
+    if (frag != std::string::npos)
+        data = data.substr(0, frag);
     std::string path = data;
     if (data.find('?') != std::string::npos)
     {
         int queryStart = data.find('?');
-        path = data.substr(0, queryStart);
+        path           = data.substr(0, queryStart);
         cleint.req.setQuery(data.substr(queryStart + 1));
     }
     normalisePath(path, "/./", "/", 3);
@@ -111,11 +115,8 @@ int parseRequestLine(Client &client, std::string &data)
     if (!splitDataToTokens(data, tokens))
         return BAD_REQUEST;
     if (!checkSetMethod(tokens[0], client, client.parse.methods))
-        return METHOD_NOT_ALLOWED;
+        return BAD_REQUEST;
     if (!checkSetPathQuery(client, tokens[1]))
         return BAD_REQUEST;
-    int httpEC = checkSetHttp(client, tokens[2]);
-    if (httpEC)
-        return httpEC;
-    return 0;
+    return checkSetHttp(client, tokens[2]);
 }

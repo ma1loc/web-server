@@ -102,9 +102,9 @@ bool& insideLoc)
     i++;
     if (Serv.index.empty() && !insideLoc)
     {
-        while(tokenContainer[i].type == 1)
+        while(tokenContainer[i].value != ";")
         {
-            Serv.index.push_back(tokenContainer[i].value);
+            Serv.index.insert(tokenContainer[i].value);
             i++;
         }
     }
@@ -114,11 +114,12 @@ void handle_error_page_server(std::deque<Token>& tokenContainer, ServerBlock& Se
 bool& insideLoc)
 {
     (void)countARG;
-    std::deque<int> errorsnum;
+    std::set<int> errorsnum;
     std::string value;
     int errornum = 0;
     int num = errornum;
     i++;
+
     while(tokenContainer[i].value != ";")
     {
         errornum = 0;
@@ -133,22 +134,25 @@ bool& insideLoc)
         }
         else
         {
-            num = errornum;
             if ((errornum >= 100 && errornum < 600))
-                errorsnum.push_back(errornum);
+            {
+                num = errornum;
+                errorsnum.insert(num);
+            }
             else
                 error_line(": error page number must be a valid http number", tokenContainer[i].line);
         }
         i++;
     }
-    if (errorsnum.empty())
-        error_line(": error_page is missing a page error number", tokenContainer[i].line);
-    else
-    {
-        countARG = std::count(errorsnum.begin(), errorsnum.end(), num);
-        if (countARG > 1)
-            error_line(": duplicate status code in error_page", tokenContainer[i].line);
-    }
     if (!insideLoc)
-        Serv.error_page.insert(std::make_pair(errorsnum, value));
+    {
+        if (value.empty())
+            error_line(": there must be a path for error_page", tokenContainer[i].line);
+        for (std::set<int>::iterator it = errorsnum.begin();
+                it != errorsnum.end(); ++it)
+        {
+            int code = *it;
+            Serv.error_page[code] = value;
+        } 
+    }
 }

@@ -47,12 +47,11 @@ bool checkForMethod(Client &client)
 
     for (it = headers.begin(); it != headers.end(); it++)
     {
-        if (it->first == "CONTENT-LENGTH")
+        if (it->first == "CONTENT_LENGTH")
         {
             if (flag)
                 return false;
-            int length = strToBase(it->second, 10000000, "0123456789");
-            // TODO : add the config file max body later
+            int length = strToBase(it->second, client.location_conf->client_max_body_size, "0123456789");
             if (length == -1)
                 return false;
             else
@@ -60,7 +59,7 @@ bool checkForMethod(Client &client)
             client.parse.bodyReadMod = it->first;
             flag                     = true;
         }
-        if (it->first == "TRANSFER-ENCODING" && it->second == "chunked")
+        if (it->first == "TRANSFER_ENCODING" && it->second == "chunked")
         {
             if (flag)
                 return false;
@@ -74,16 +73,16 @@ bool checkForMethod(Client &client)
 }
 
 int collectBodyByLength(Client &client)
-{
+{ 
     if (client.parse.remaining.size() >= (size_t)client.parse.contentLength)
     {
         client.req.setBody(
             client.parse.remaining.substr(0, client.parse.contentLength)
         );
-        return 200;
+        return OK;
     }
     else
-        return 0;
+        return REQ_NOT_READY;
 }
 
 int collectBodyByChunks(Client &client, std::string &remain)
@@ -94,12 +93,14 @@ int collectBodyByChunks(Client &client, std::string &remain)
         {
             size_t end = remain.find("\r\n");
             if (end == std::string::npos)
-                return 0;
+                return REQ_NOT_READY;
             std::string bytesLine = remain.substr(0, end);
+            if (bytesLine.size() > MAX_CHUNK_SIZE)
+                return BAD_REQUEST;
             UpperCaseBodyBytes(bytesLine);
-            int bytes = strToBase(bytesLine, 10000000, "0123456789ABCDEF");
+            int bytes = strToBase(bytesLine, client.location_conf->client_max_body_size, "0123456789ABCDEF");
             if (bytes == -1)
-                return 400;
+                return BAD_REQUEST;
             remain.erase(0, end + 2);
             if (bytes == 0)
                 client.parse.chunkState = FINALCRLF;
@@ -111,14 +112,16 @@ int collectBodyByChunks(Client &client, std::string &remain)
         {
             int bytes = client.parse.expectedBytes;
             if ((size_t)(bytes + 2) > remain.size())
-                return 0;
+                return REQ_NOT_READY;
             else
             {
                 if (remain.compare(bytes, 2, "\r\n") != 0)
-                    return 400;
+                    return BAD_REQUEST;
                 else
                 {
                     client.req.appendBody(remain.substr(0, bytes));
+                    if (client.req.getBody().size() > (size_t)client.location_conf->client_max_body_size)
+                        return PAYLOAD_TOO_LARGE;
                     client.parse.chunkState = CALCULATING;
                     remain.erase(0, bytes + 2);
                 }
@@ -127,11 +130,11 @@ int collectBodyByChunks(Client &client, std::string &remain)
         if (client.parse.chunkState == FINALCRLF)
         {
             if (remain.size() < 2)
-                return 0;
+                return REQ_NOT_READY;
             if (remain.compare(0, 2, "\r\n") == 0)
-                return 200;
+                return OK;
             else
-                return 400;
+                return BAD_REQUEST;
         }
     }
     return 0;
@@ -142,17 +145,18 @@ int parseBody(Client &client)
     if (!client.parse.bodyBegin)
     {
         if (!checkForMethod(client))
-            return 400;
+            return BAD_REQUEST;
         else
             client.parse.bodyBegin = true;
     }
 
     if (client.parse.bodyBegin)
     {
-        if (client.parse.bodyReadMod == "CONTENT-LENGTH")
+        if (client.parse.bodyReadMod == "CONTENT_LENGTH")
             return collectBodyByLength(client);
-        else if (client.parse.bodyReadMod == "TRANSFER-ENCODING")
+        else if (client.parse.bodyReadMod == "TRANSFER_ENCODING")
             return collectBodyByChunks(client, client.parse.remaining);
     }
     return 0;
 }
+

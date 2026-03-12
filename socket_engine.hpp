@@ -15,11 +15,11 @@
 # include <stdint.h>
 # include <cerrno>
 # include <cstdlib>
-# include <fcntl.h>
 # include <netdb.h>
 # include <iostream>
 # include <algorithm>
 # include <deque>
+#include <fcntl.h>
 
 # include "response.hpp"
 # include "config_parsing/includes/ConfigPars.hpp"
@@ -28,7 +28,8 @@
 # define TIMEOUT 1000 // type???
 # define TIMEOUT_LIMIT 5
 # define QUEUE_LIMIT 128
-# define BUFFER_SIZE 1024
+# define BUFFER_SIZE 8192
+// # define BUFFER_SIZE 10
 # define PROTOCOL_TYLE 0
 # define MAX_EVENTS 64
 
