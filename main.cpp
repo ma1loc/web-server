@@ -66,6 +66,5 @@ int main(int ac, char **av)
         std::cerr << e.what() << '\n';
         s_engine.free_fds_list();
     }
-    
     return (0);
 }

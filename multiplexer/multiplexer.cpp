@@ -51,7 +51,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             this->raw_client_data[fd].last_activity = time(0);
             std::string raw_data_buff(raw_data, recv_stat);
 
-
+            // rm-me
             std::cout << READ_S << "--------- START REQUEST\n" << raw_data_buff << "\n------- END RAQUEST" << READ_E << std::endl;
 
             int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
@@ -63,13 +63,13 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             // -------------------------------------------------------------------------------
 
             response_builder response_builder;
-
             response_builder.init_response_builder(raw_client_data[fd]);
+
+            // CGI
 
             response_builder.build_response();
             
             modify_epoll_event(fd, EPOLLOUT | EPOLLIN);
-            // exit(1);
 
             // -------------------------------------------------------------------------------
 
@@ -84,7 +84,9 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
     {
         if (raw_client_data[fd].is_serving_file)
         {
+            // rm-me
             std::cout << GREEN_S << "+++++++++++++++++++++++++++++++++ YOUR SERVING STATIC FILE +++++++++++++++++++++++++++++++++" << GREEN_E << std::endl;
+
             if (raw_client_data[fd].res.stream_response_to_client(fd))
                 raw_client_data[fd].close_connection = true;
         }

@@ -63,17 +63,17 @@ void    response_builder::serving_static_file()
 // TODO-LATER: Methode not allowed
 void response_builder::build_response()
 {
+    exit(1);
+    // rm-me
     std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
     std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
     std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
 
-    if (this->current_client->res.get_stat_code() != OK) {
-        // exit(2);
+
+    if (this->current_client->res.get_stat_code() != OK)
         generate_error_page();  // DONE [-] working on it
-    }
     else
     {
-        // exit(3);
         path_validation();  // TOKNOW: auto-index gen
         if (this->current_client->res.get_stat_code() != OK)
             generate_error_page();  // DONE [-] working on it
@@ -82,10 +82,8 @@ void response_builder::build_response()
             if (this->current_client->req.getMethod() == GET_METHODE)
                 handle_get();   // DONE [+]
 
-            else if (this->current_client->req.getMethod() == POST_METHODE) {
-                exit(111);
+            else if (this->current_client->req.getMethod() == POST_METHODE)
                 handle_post();  // DONE [-] working on it
-            }
             
             else if (this->current_client->req.getMethod() == DELETE_METHODE)
                 handle_delete();    // DONE [+]
@@ -93,6 +91,8 @@ void response_builder::build_response()
 
     }
     // std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
+    std::cout << GREEN_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << GREEN_E << std::endl;
+    exit(1);
     this->current_client->res.set_raw_response(response_holder);
-    // std::cout << GREEN_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << GREEN_E << std::endl;
+
 }

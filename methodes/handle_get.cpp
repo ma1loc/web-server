@@ -42,7 +42,8 @@ void    response_builder::generate_error_page()
     std::cout << "this->path -> " << this->path << std::endl;
     if (is_valid_error_path(this->path))
         serving_static_file();
-    else {
+    else
+    {
         set_header();
         default_error_page(status_code);
     }

@@ -7,7 +7,7 @@
 
 void    response_builder::handle_post()
 {
-
+    exit(99);
     // >>>>>>>>>>>>>>>>>>>>>>>>> Header Processing >>>>>>>>>>>>>>>>>>>>>>>>>
     std::string file_name;
     std::string content_type;
@@ -57,6 +57,8 @@ void    response_builder::handle_post()
     }
     close (file_fd);
     this->current_client->res.set_stat_code(CREATED);
+
+    // NO response yet
 
     std::cout << "[>] POST STATUS CODE " << current_client->res.get_stat_code() << std::endl;
 
