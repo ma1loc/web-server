@@ -13,5 +13,5 @@ void inisializeClient(Client &client)
     client.parse.methods[1] = "POST";
     client.parse.methods[2] = "DELETE";
 
-    client.state = CHECKING;
+    client.cgiHandler.state = CHECKING;
 }

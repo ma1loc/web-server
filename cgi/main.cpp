@@ -6,43 +6,41 @@
 int main()
 {
     Client client;
-    Cgi    cgiHandler;
-    if (client.state == CHECKING)
+
+    if (client.cgiHandler.state == CHECKING)
     {
-        if (cgiHandler.checkForCgi(client))
-            client.state = SETUP_CGI;
+        if (client.cgiHandler.checkForCgi(client))
+            client.cgiHandler.state = SETUP_CGI;
     }
-    if (client.state == SETUP_CGI)
+    if (client.cgiHandler.state == SETUP_CGI)
     {
-        cgiHandler.buildEnv(client);
-        cgiHandler.buildArg(client);
-        client.state = CREAT_PIPES;
+        client.cgiHandler.buildEnv(client);
+        client.cgiHandler.buildArg(client);
+        client.cgiHandler.state = CREAT_PIPES;
     }
-    if (client.state == CREAT_PIPES)
+    if (client.cgiHandler.state == CREAT_PIPES)
     {
-        if (!cgiHandler.creatPipes())
-            client.state = ERROR;
+        if (!client.cgiHandler.creatPipes())
+            client.cgiHandler.state = ERROR;
         else
-            client.state = EXECUTING;
+            client.cgiHandler.state = EXECUTING;
     }
-    if (client.state = EXECUTING)
+    if (client.cgiHandler.state == EXECUTING)
     {
-        cgiHandler.pid = fork();
-        if (cgiHandler.pid == -1)
+        client.cgiHandler.pid = fork();
+        if (client.cgiHandler.pid == -1)
         {
             std::cerr << "FORK FAILED" << std::endl;
-            client.state = ERROR;
+            client.cgiHandler.state = ERROR;
         }
-        if (cgiHandler.pid == 0)
-            cgiHandler.childProccess();
+        if (client.cgiHandler.pid == 0)
+            client.cgiHandler.childProccess();
         else
         {
-            cgiHandler.parantProccess(client);
-            client.state = CGI_READING;
+            client.cgiHandler.parantProccess(client);
+            client.cgiHandler.state = CGI_READING;
         }
     }
-    if (client.state == CGI_READING || client.state == CGI_WAITING)
-    {
-
-    }
+    if (client.cgiHandler.state == CGI_READING || client.cgiHandler.state == CGI_WAITING)
+        client.cgiHandler.reading();
 }
