@@ -27,18 +27,18 @@ Cgi &Cgi::operator=(const Cgi &other)
 
 Cgi::~Cgi()
 {
-    if (envp)
-    {
-        for (size_t i = 0; envp[i]; i++)
-            free(envp[i]);
-        delete[] envp;
-    }
-    if (argv)
-    {
-        for (size_t i = 0; argv[i]; i++)
-            free(argv[i]);
-        delete[] argv;
-    }
+    // if (envp)
+    // {
+    //     for (size_t i = 0; envp[i]; i++)
+    //         free(envp[i]);
+    //     delete[] envp;
+    // }
+    // if (argv)
+    // {
+    //     for (size_t i = 0; argv[i]; i++)
+    //         free(argv[i]);
+    //     delete[] argv;
+    // }
 }
 
 void Cgi::setInterpreter(const std::string &interpreter)
