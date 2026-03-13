@@ -65,7 +65,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             response_builder response_builder;
             response_builder.init_response_builder(raw_client_data[fd]);
 
-            // CGI
+            
 
             response_builder.build_response();
             
@@ -91,6 +91,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
                 raw_client_data[fd].close_connection = true;
         }
         else {
+            // exit(1);
             std::string buffer = raw_client_data[fd].res.get_raw_response();
             if (!buffer.empty())
             {
