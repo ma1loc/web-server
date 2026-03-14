@@ -83,13 +83,13 @@ void response_builder::build_response()
 
             else if (this->current_client->req.getMethod() == POST_METHODE)
                 handle_post();  // DONE [-] working on it
-            
+
             else if (this->current_client->req.getMethod() == DELETE_METHODE)
                 handle_delete();    // DONE [+]
         }
 
     }
-    // std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
+
     std::cout << READ_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << READ_E << std::endl;
     this->current_client->res.set_raw_response(response_holder);
 }
