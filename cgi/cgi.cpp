@@ -2,6 +2,7 @@
 #include "../client.hpp"
 #include "../utils/utils.hpp"
 
+
 size_t Cgi::CGI_MAX_OUTPUT = 10000000;
 
 Cgi::Cgi()
@@ -20,7 +21,7 @@ Cgi &Cgi::operator=(const Cgi &other)
     if (this != &other)
     {
         interpreter = other.interpreter;
-        extension   = other.extension;
+        extension = other.extension;
     }
     return *this;
 }
@@ -73,13 +74,15 @@ char **Cgi::getEnv() const
 
 void Cgi::checkForCgi(Client &client)
 {
+    client.req.setPath("./www/cgi-bin/hello.py");
     if (client.location_conf->cgi_handler.empty())
     {
+        std::cout << "----------------------------------->>>>>>>>>>" << client.req.getPath() << std::endl;
+
         state = CGI_NOT_REQUIRED;
         return;
     }
     size_t dot = client.req.getPath().rfind('.');
-
     if (dot == std::string::npos)
     {
         state = CGI_NOT_REQUIRED;
@@ -94,8 +97,9 @@ void Cgi::checkForCgi(Client &client)
         if (exten == it->first)
         {
             interpreter = it->second;
-            extension   = it->first;
-            state       = SETUP_CGI;
+            extension = it->first;
+            state = SETUP_CGI;
+
             return;
         }
     }
@@ -111,13 +115,12 @@ void collectEnv(Client &client, std::vector<std::string> &env)
     env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     env.push_back("SERVER_SOFTWARE=Webserve");
     env.push_back(
-        "REQUEST_URI=" + client.req.getPath() + client.req.getQuery()
-    );
+        "REQUEST_URI=" + client.req.getPath() + client.req.getQuery());
     env.push_back("SERVER_NAME="); // hostname needed later
     env.push_back("SERVER_PORT=" + to_string(client.port));
     env.push_back("REDIRECT_STATUS=200");
 
-    std::map<std::string, std::string> headers      = client.req.getHeaders();
+    std::map<std::string, std::string> headers = client.req.getHeaders();
     std::map<std::string, std::string>::iterator it = headers.begin();
 
     for (; it != headers.end(); it++)
@@ -133,10 +136,10 @@ void collectEnv(Client &client, std::vector<std::string> &env)
 void Cgi::buildEnv(Client &client)
 {
     std::vector<std::string> env;
-    size_t                   i;
+    size_t i;
 
     collectEnv(client, env);
-    i    = env.size();
+    i = env.size();
     envp = new char *[i + 1];
 
     for (size_t j = 0; j < i; j++)
@@ -199,8 +202,11 @@ void Cgi::execution(Client &client)
 
 void Cgi::childProcess()
 {
-    dup2(pipeIn[0], STDIN_FILENO);
-    dup2(pipeOut[1], STDOUT_FILENO);
+    if (dup2(pipeIn[0], STDIN_FILENO) == -1)
+        exit(1);
+
+    if (dup2(pipeOut[1], STDOUT_FILENO) == -1)
+        exit(1);
 
     close(pipeIn[1]);
     close(pipeIn[0]);
@@ -208,7 +214,11 @@ void Cgi::childProcess()
     close(pipeOut[1]);
 
     execve(argv[0], argv, envp);
-    std::cerr << "EXECVE FAILED: " << strerror(errno);
+
+    // Only runs if execve fails
+    write(STDOUT_FILENO, "EXECVE FAILED: ", 16);
+    char *str = strerror(errno);
+    write(STDOUT_FILENO, str, strlen(str));
     exit(1);
 }
 
@@ -218,8 +228,7 @@ void Cgi::parentProcess(Client &client)
     close(pipeOut[1]);
     if (client.parse.body)
         write(
-            pipeIn[1], client.req.getBody().c_str(), client.req.getBody().size()
-        );
+            pipeIn[1], client.req.getBody().c_str(), client.req.getBody().size());
     close(pipeIn[1]);
     gettimeofday(&start, NULL);
 }
@@ -258,13 +267,34 @@ void Cgi::reading()
         char buff[1024];
 
         int n = read(pipeOut[0], buff, 1024);
+
         if (n > 0)
             response.append(buff, n);
+
         else if (n == 0)
         {
             state = CGI_WAITING;
             close(pipeOut[0]);
         }
+        std::cout << "respooooooooooooooooooooooooooooooooooooooooooooooooooooooooonse ------------2> " << this->extension << std::endl;
+        std::cout << "respooooooooooooooooooooooooooooooooooooooooooooooooooooooooonse ------------1> " << this->interpreter << std::endl;
+        std::cout << "respooooooooooooooooooooooooooooooooooooooooooooooooooooooooonse ------------> " << this->response << std::endl;
     }
     checkResponseAndTime();
+}
+
+// they tell me this is the mean function to use
+void Cgi::handleCGI(Client &client)
+{
+    if (this->state == CHECKING)
+        this->checkForCgi(client);
+    if (this->state == SETUP_CGI)
+        this->setupCgi(client);
+    if (this->state == CREAT_PIPES)
+        this->createPipes();
+    if (this->state == EXECUTING)
+        this->execution(client);
+    if (this->state == CGI_READING ||
+        this->state == CGI_WAITING)
+        this->reading();
 }
