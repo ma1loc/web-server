@@ -57,20 +57,31 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
             if (req_stat == REQ_NOT_READY)
                 return ;
+            
+            // >>> CGI
+            // -----------------------------------------------------------------------
+            // CGI_NOT_REQUIRED, CGI_DONE, ERROR
+            this->raw_client_data[fd].cgiHandler.handleCGI(this->raw_client_data[fd]);
+            if (this->raw_client_data[fd].cgiHandler.state != CGI_NOT_REQUIRED)
+            {
+                std::cout << "IT'S FUCKING CGI" << std::endl;
+                return ;
+            }
+            else {
+                std::cout << "IT'S NOT FUCKING CGI" << std::endl;
+            }
+            exit(1);
+            // -----------------------------------------------------------------------
 
             this->raw_client_data[fd].res.set_stat_code(req_stat);
 
             // -------------------------------------------------------------------------------
-
             response_builder response_builder;
             response_builder.init_response_builder(raw_client_data[fd]);
-
-            
 
             response_builder.build_response();
             
             modify_epoll_event(fd, EPOLLOUT | EPOLLIN);
-
             // -------------------------------------------------------------------------------
 
         }
