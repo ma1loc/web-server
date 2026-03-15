@@ -1,48 +1,22 @@
 // this main is not for testing or runing
 //  only copy the code inside the main to put it in hte cgi section in wevserve
 
+#include "../client.hpp"
 #include "cgi.hpp"
 
 int main()
 {
     Client client;
-    Cgi    cgiHandler;
-    if (client.state == CHECKING)
-    {
-        if (cgiHandler.checkForCgi(client))
-            client.state = SETUP_CGI;
-    }
-    if (client.state == SETUP_CGI)
-    {
-        cgiHandler.buildEnv(client);
-        cgiHandler.buildArg(client);
-        client.state = CREAT_PIPES;
-    }
-    if (client.state == CREAT_PIPES)
-    {
-        if (!cgiHandler.creatPipes())
-            client.state = ERROR;
-        else
-            client.state = EXECUTING;
-    }
-    if (client.state = EXECUTING)
-    {
-        cgiHandler.pid = fork();
-        if (cgiHandler.pid == -1)
-        {
-            std::cerr << "FORK FAILED" << std::endl;
-            client.state = ERROR;
-        }
-        if (cgiHandler.pid == 0)
-            cgiHandler.childProccess();
-        else
-        {
-            cgiHandler.parantProccess(client);
-            client.state = CGI_READING;
-        }
-    }
-    if (client.state == CGI_READING || client.state == CGI_WAITING)
-    {
 
-    }
+    if (client.cgiHandler.state == CHECKING)
+        client.cgiHandler.checkForCgi(client);
+    if (client.cgiHandler.state == SETUP_CGI)
+        client.cgiHandler.setupCgi(client);
+    if (client.cgiHandler.state == CREAT_PIPES)
+        client.cgiHandler.createPipes();
+    if (client.cgiHandler.state == EXECUTING)
+        client.cgiHandler.execution(client);
+    if (client.cgiHandler.state == CGI_READING ||
+        client.cgiHandler.state == CGI_WAITING)
+        client.cgiHandler.reading();
 }

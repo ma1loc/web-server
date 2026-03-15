@@ -1,8 +1,29 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#include "../client.hpp"
+// #define CGI_TIMEOUT 5
+// #define CGI_TIMEOUT 30
+#define CGI_TIMEOUT 60
+
+#include <iostream>
+#include <stdlib.h>
+#include <sys/time.h>
 #include <wait.h>
+
+enum cgiState
+{
+    CHECKING,
+    SETUP_CGI,
+    CREAT_PIPES,
+    EXECUTING,
+    CGI_READING,
+    CGI_WAITING,
+    CGI_DONE,
+    CGI_NOT_REQUIRED,
+    ERROR
+};
+
+struct Client;
 
 class Cgi
 {
@@ -14,11 +35,17 @@ class Cgi
     int         pipeIn[2];
     int         pipeOut[2];
     std::string response;
+	
+	public:
+    static size_t  CGI_MAX_OUTPUT;
+    cgiState       state;
+    pid_t          pid;
+    int            status;
+    struct timeval start;
+    struct timeval current;
+	
+	off_t			body_bytes_sent;
 
-  public:
-    pid_t pid;
-    int   status;
-    
     Cgi();
     Cgi(const Cgi &other);
     Cgi &operator=(const Cgi &other);
@@ -32,13 +59,23 @@ class Cgi
     char      **getArgv() const;
     char      **getEnv() const;
 
-    bool checkForCgi(Client &client);
+	// ----- new ---------
+	int	getPipeFd() const;
+	std::string getResponse() const;
+	int getPipeInFd() const;
+	// -------------------
+
+    void checkForCgi(Client &client);
     void buildEnv(Client &client);
     void buildArg(Client &client);
-    bool creatPipes();
-    void childProccess();
-    void parantProccess(Client &client);
-    void reading(Client &client);
+    void setupCgi(Client &client);
+    void createPipes();
+    void execution(Client &client);
+    void childProcess();
+    void parentProcess(Client &client);
+    void checkResponseAndTime();
+    void reading();
+    void handleCGI(Client &client);
 };
 
 #endif

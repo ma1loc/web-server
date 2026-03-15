@@ -48,6 +48,9 @@ class socket_engine {
         void    modify_epoll_event(ssize_t fd, uint32_t events);
         // void    handle_client_write(fd);
 
+		// Map: Key = Pipe FD, Value = Client Socket FD
+		std::map<int, int> pipe_to_client;
+		std::map<int, int> pipe_write_to_client;
 
     public:
         socket_engine();

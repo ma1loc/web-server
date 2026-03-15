@@ -38,6 +38,7 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
     if (stat_code_str.empty()) {
         stat_code_str[OK] = "OK";
         stat_code_str[CREATED] = "Created";
+        stat_code_str[MOVED_PERMANENTLY] = "Moved Permanently";
         stat_code_str[NO_CONTENT] = "No Content";
         stat_code_str[BAD_REQUEST] = "Bad Request";
         stat_code_str[FORBIDDEN_ACCESS] = "Forbidden";
