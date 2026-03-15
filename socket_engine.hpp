@@ -43,10 +43,16 @@ class socket_engine {
         std::map<int, Client> raw_client_data; // >>> raw request data stored in
         std::deque<ServerBlock> server_config_info; // >>> config file saved here
 
+		// Map: Key = Pipe FD, Value = Client Socket FD
+		std::map<int, int> pipe_to_client;
+		std::map<int, int> pipe_write_to_client;
+
         void    server_event(ssize_t fd);
         void    client_event(ssize_t fd, uint32_t events);
         void    modify_epoll_event(ssize_t fd, uint32_t events);
         // void    handle_client_write(fd);
+
+        void    setup_cgi_pipes(int fd);
 
 
     public:
@@ -55,14 +61,19 @@ class socket_engine {
         void    init_server_side(std::string port, std::string host);
 
         void    process_connections(void);  // here i have to mutiplixier loop
+        
         void    remove_fd_from_list(int fd);
         void    free_fds_list(void);
+
         void    check_all_client_timeouts(void);    // working on it []
         void    terminate_client(int fd, std::string stat);
         void    set_fds_list(int fd);
         void    set_server_side_fds(int s_fd);
         void    set_server_config_info(std::deque<ServerBlock> server_config);
-
+        
+        void    add_pipeIn_event(int client_fd, int pipeIn);
+        void    add_pipeOut_event(int client_fd, int pipeOut);
+        
         std::vector<int>        get_server_side_fds(void) const;
         std::map<int, Client>   &get_raw_client_data(void) const;
         const std::deque<ServerBlock> &get_server_config_info() const;

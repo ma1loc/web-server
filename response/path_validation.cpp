@@ -52,14 +52,36 @@ void    response_builder::path_validation()
     std::string index;
     struct stat statbuf;
 
-    // ----------------------------------------
-    // if (current_client->server_conf == NULL)
-    //     exit(100);
-    // if (current_client->location_conf == NULL)
-    //     exit(200);
-    // ----------------------------------------
+    if (current_client->server_conf == NULL || current_client->location_conf == NULL) {
+        this->current_client->res.set_stat_code(SERVER_ERROR);
+        return ;
+    }
+	
+	std::string req_path = this->current_client->req.getPath();
+    std::string loc_path = this->current_client->location_conf->path;
+    if (req_path.substr(0, loc_path.size()) == loc_path)
+        req_path = req_path.substr(loc_path.size());
+    if (req_path.empty())
+        req_path = "/";
+    this->path = join_root_path(current_client->location_conf->root, req_path);
 
-    this->path = join_root_path(current_client->location_conf->root, this->current_client->req.getPath());
+	// RETURN THE REDIRECTION PATH IF EXIST
+	if (!this->current_client->location_conf->redirection.empty())
+    {
+        std::map<int, std::string>::const_iterator it = 
+            current_client->location_conf->redirection.begin();
+
+        this->current_client->res.set_stat_code(it->first);
+
+		std::cout << BLUE << "[>] redirection to: " << it->second << RESET << std::endl;
+
+        response_holder.append(current_client->res.get_start_line());
+        response_holder.append("Location: " + it->second + "\r\n\r\n");
+        this->current_client->res.set_raw_response(response_holder);
+        return ;
+	}
+
+    // this->path = join_root_path(current_client->location_conf->root, this->current_client->req.getPath());
     if (stat(path.c_str(), &statbuf) < 0) {
         this->current_client->res.set_stat_code(NOT_FOUND);
         return ;
@@ -79,7 +101,7 @@ void    response_builder::path_validation()
         else if (index.empty() && current_client->location_conf->autoindex)
             autoindex_page(this->path, this->current_client->req.getPath());
         else {
-            this->current_client->res.set_stat_code(FORBIDDEN_ACCESS);
+            this->current_client->res.set_stat_code(NOT_FOUND);
         }
     }
 }

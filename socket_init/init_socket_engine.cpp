@@ -75,49 +75,80 @@ void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config
 
 // --------------------------------------------------------------------------------------------------------------
 
-void socket_engine::check_all_client_timeouts(void) // TODO-CHECK
+void socket_engine::check_all_client_timeouts(void)
 {
     time_t now = time(0);
     std::map<int, Client>::iterator it = raw_client_data.begin();
-    
+
     std::cout << GREEN_S << "NUMBER of the clients -> " << raw_client_data.size() << GREEN_E << std::endl;
 
     while (it != raw_client_data.end())
     {
         size_t timeout_limit = TIMEOUT_LIMIT;
-
         int fd = it->first;
-        
+
+        if (it->second.server_conf != NULL)
+            timeout_limit = it->second.server_conf->set_timeout;
+
         if (it->second.close_connection)
         {
             epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
             raw_client_data.erase(it++);
             remove_fd_from_list(fd);
             close(fd);
-            // terminate_client(fd, "Response sent Successfully (HTTP/1.0)");
-            std::cerr << GREEN_S <<  "+++++++++ Response sent Successfully (HTTP/1.0) +++++++++" << GREEN_E << std::endl;
-            continue ;
+            continue;
         }
-
-        if (it->second.server_conf != NULL)
-            timeout_limit = it->second.server_conf->set_timeout;
-
-        std::cout << GREEN_S << "\n-------- INFO START\n" << "fd:" << fd
-            << "\nclose_connection: " << it->second.close_connection
-            << GREEN_E << "\n-------- INFO END" <<std::endl;
 
         if ((now - it->second.last_activity) > (time_t)timeout_limit && !it->second.close_connection)
         {
+            // exit(123);
+			bool active_pipe_write = false;
+			for (std::map<int,int>::iterator p = pipe_write_to_client.begin(); p != pipe_write_to_client.end(); ++p)
+            {
+				if (p->second == fd)
+                {
+                    exit(1);    // even i run a CGI it's never exit
+                    active_pipe_write = true;
+                    break;
+                }
+			}
+			if (active_pipe_write) { ++it; continue; }
+            // >>>>>>>>>> ADD THIS BLOCK HERE <<<<<<<<
+            for (std::map<int,int>::iterator p = pipe_to_client.begin(); p != pipe_to_client.end(); )
+            {
+                if (p->second == fd)  // this pipe belongs to the client we're about to erase
+                {
+                    exit(2);    // even i run a CGI it's never exit
+                    epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
+                    remove_fd_from_list(p->first);
+                    kill(it->second.cgiHandler.pid, SIGTERM);
+					pipe_to_client.erase(p++);
+                }
+                else
+                    ++p;
+            }
+            // >>>>>>>>>> END OF ADDED BLOCK <<<<<<<<
+
+			for (std::map<int,int>::iterator p = pipe_write_to_client.begin();
+				p != pipe_write_to_client.end(); )
+			{
+				if (p->second == fd) {
+                    exit(1);    // even i run a CGI it's never exit
+					epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
+					remove_fd_from_list(p->first);
+					close(p->first);
+					pipe_write_to_client.erase(p++);
+				} else
+					++p;
+			}
+
             epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
             raw_client_data.erase(it++);
             remove_fd_from_list(fd);
             close(fd);
-
-            continue ;
-
-            // std::cout << GREEN_S << "[-] Timeout detected on FD " << fd << ". Cleaning up..." << GREEN_E << std::endl;
+            continue;
         }
-        else 
+        else
             ++it;
     }
 }

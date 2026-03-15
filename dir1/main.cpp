@@ -12,7 +12,6 @@ void signal_handler(int sig_flag) {
 
 int main(int ac, char **av)
 {
-	signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, signal_handler);
     std::deque<ServerBlock> ServerConfig;
 

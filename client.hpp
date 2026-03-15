@@ -5,12 +5,16 @@
 # include "request/includes/request.hpp"
 # include "request/includes/parseRequest.hpp"
 # include "response.hpp"
+#include "cgi/cgi.hpp"
 
 # define GREEN_S "\033[0;32m"
 # define GREEN_E "\033[0m"
 
 # define READ_S "\033[31m"
 # define READ_E "\033[0m"
+
+#define BLUE "\033[34m"
+#define RESET "\033[0m"
 
 // default extansion in case (No name, No content-type)
 # define DEFAULT_EXTENSION ".txt"
@@ -19,18 +23,6 @@
 
 class Request;
 struct reqParse;
-
-enum cgiState
-{
-    CHECKING,
-    SETUP_CGI,
-    CREAT_PIPES,
-    EXECUTING,
-    CGI_READING,
-    CGI_WAITING,
-    CGI_DONE,
-    ERROR
-};
 
 // MAIN
 // will add every thing need between [req/res] 
@@ -53,20 +45,18 @@ struct Client
 	reqParse parse;
     response res;
     bool    reqReady;
+    unsigned int    last_activity;
+    bool            close_connection;
 
     // cgi
+    Cgi cgiHandler;
 
-    cgiState state;
     // serving static file
-    // -----------------------------
     bool            is_serving_file;
     int             static_file_fd;
     off_t           file_size;
     off_t           bytes_sent;
-    // -----------------------------
 
-    unsigned int    last_activity;
-    bool            close_connection;
 };
 
 void inisializeClient(Client &client);

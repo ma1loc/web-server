@@ -43,11 +43,18 @@ int parseRequest(Client &client, std::string &recivedData)
         else
             return REQ_NOT_READY;
     }
-    if (client.parse.step == BODY && client.parse.body)
-    {
-        if (client.parse.remaining.size() > (size_t)client.location_conf->client_max_body_size)
-            return PAYLOAD_TOO_LARGE;
-        return parseBody(client);
-    }
+
+    // if (client.parse.step == BODY && client.parse.body)
+    // {
+	// if (client.location_conf != NULL
+    //     if (client.parse.remaining.size() > (size_t)client.location_conf->client_max_body_size)
+    //         return PAYLOAD_TOO_LARGE;
+    //     return parseBody(client);
+    // }
+	
+	if (client.parse.step == BODY && client.parse.body)
+	{
+		return parseBody(client);
+	}
     return OK;
 }

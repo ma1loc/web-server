@@ -18,7 +18,7 @@
     <div class="box">
         <h3>1. GET Test (Static Files)</h3>
         <p>If you see the image below, good it works just fine</p>
-        <img src="mem.png" alt="Image Not Found" style="max-width: 200px;">
+        <img src="meme.jpg" alt="Image Not Found" style="max-width: 200px;">
     </div>
 
     <!-- POST -->
@@ -40,21 +40,30 @@
 
     <!-- POST script -->
     <script>
-        async function uploadRaw() {
+        async function uploadRaw()
+        {
             const input = document.getElementById('fileInput');
             if (!input.files[0]) return alert("Select a file!");
             
             const file = input.files[0];
-            await fetch('/upload', {
+            const response = await fetch('/upload', {
                 method: 'POST',
                 headers: {
-                    'Content-Length': file.size,
                     'filename': file.name,
                     'Content-Type': file.type
                 },
-                body: file // This sends the RAW bytes
+                body: file 
             });
-            alert("Upload Attempted! Check your server logs.");
+
+            // If server returns 4xx or 5xx, force the browser to show the error HTML
+            if (!response.ok) {
+                const errorHtml = await response.text();
+                document.open();
+                document.write(errorHtml);
+                document.close();
+            } else {
+                alert("Upload Successful! (201 Created)");
+            }
         }
     </script>
 

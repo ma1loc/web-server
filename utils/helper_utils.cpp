@@ -38,6 +38,7 @@ const std::string   &stat_code_to_string(unsigned short int stat_code)
     if (stat_code_str.empty()) {
         stat_code_str[OK] = "OK";
         stat_code_str[CREATED] = "Created";
+        stat_code_str[MOVED_PERMANENTLY] = "Moved Permanently";
         stat_code_str[NO_CONTENT] = "No Content";
         stat_code_str[BAD_REQUEST] = "Bad Request";
         stat_code_str[FORBIDDEN_ACCESS] = "Forbidden";
@@ -322,3 +323,10 @@ bool    is_cgi_request(std::string path)
     return false;
 }
 
+bool    is_server(std::vector<int> &server_side_fds, unsigned short int fd)
+{
+    std::vector<int>::iterator is_server = std::find(server_side_fds.begin(), server_side_fds.end(), fd);
+    if (is_server != server_side_fds.end())
+        return (true);
+    return (false);
+}

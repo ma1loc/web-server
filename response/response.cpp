@@ -81,14 +81,15 @@ off_t response::get_bytes_sent(void) const {
     return (this->bytes_sent);
 }
 
-bool            response::stream_response_to_client(int fd)
+
+bool    response::stream_response_to_client(int fd)
 {
     if (this->bytes_sent < (off_t)final_raw_response.size())
     {
+        // MSG_NOSIGNAL -> ignore SIGPIPE(send() in case of dead socket)
         ssize_t send_stat = send(fd, final_raw_response.c_str() + this->bytes_sent, this->final_raw_response.size() - this->bytes_sent, MSG_NOSIGNAL);
         if (send_stat == -1)
             return (false);
-
         this->set_bytes_sent(this->bytes_sent + send_stat);
     }
     else
@@ -109,7 +110,9 @@ bool            response::stream_response_to_client(int fd)
             if (bytes_actually_sent > 0)
             {
                 this->set_bytes_sent(this->bytes_sent + bytes_actually_sent);
+                // - header size
                 if (off_t(this->bytes_sent - final_raw_response.size()) >= this->file_size) {
+                    std::cout << "file_is_done" << std::endl;
                     close(static_file_fd);
                     return (true);
                 }

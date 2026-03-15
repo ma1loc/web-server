@@ -20,3 +20,8 @@ CGI -> learn about it:
 later on:
     Session
     Cookes
+
+TODO:
+- HTTP redirection — the config file section says routes must support HTTP redirection. You need to check if a location has a redirect set and return 301/302 with a Location: header.
+- ✅ Method not allowed response
+- ✅ Checking the max body size
