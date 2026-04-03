@@ -1,7 +1,8 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#define CGI_TIMEOUT 5
+#define CGI_TIMEOUT      5
+#define WRITE_READ_LIMIT 65000
 
 #include <iostream>
 #include <stdlib.h>
@@ -14,7 +15,7 @@ enum cgiState
     SETUP_CGI,
     CREAT_PIPES,
     EXECUTING,
-    CGI_READING,
+    CGI_READY,
     CGI_WAITING,
     CGI_DONE,
     CGI_NOT_REQUIRED,
@@ -28,6 +29,7 @@ class Cgi
   private:
     std::string interpreter;
     std::string extension;
+    std::string scriptPath;
     char      **envp;
     char      **argv;
     int         pipeIn[2];
@@ -41,6 +43,7 @@ class Cgi
     int            status;
     struct timeval start;
     struct timeval current;
+    size_t         sent;
 
     Cgi();
     Cgi(const Cgi &other);
@@ -57,15 +60,19 @@ class Cgi
 
     void checkForCgi(Client &client);
     void buildEnv(Client &client);
-    void buildArg(Client &client);
+    void buildArg();
     void setupCgi(Client &client);
     void createPipes();
     void execution(Client &client);
     void childProcess();
     void parentProcess(Client &client);
+    void writing(Client &client);
     void checkResponseAndTime();
     void reading();
     void handleCGI(Client &client);
+
+    int getPipeFd() const;
+    int getPipeInFd() const;
 };
 
 #endif
