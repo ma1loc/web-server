@@ -42,7 +42,6 @@ void socket_engine::remove_fd_from_list(int fd)
     std::cout << "\n";
     std::cout << "--------------------------------------------------------------" << std::endl;
     // rm-me
-
 }
 
 void socket_engine::free_fds_list(void)
@@ -170,6 +169,13 @@ void    socket_engine::modify_epoll_event(ssize_t fd, uint32_t events)
     struct epoll_event ev;
     ev.events = events;
     ev.data.fd = fd;
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1)
-        std::cerr << "[!] epoll_ctl: " << strerror(errno) << std::endl;
+    std::cout << "[DEBUG] modify_epoll_event: fd=" << fd << " events=" << events << std::endl;
+    int ret = epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev);
+    if (ret == -1) {
+        // If MOD fails, try ADD (in case FD was removed or doesn't exist yet)
+        std::cout << "[DEBUG] MOD failed, trying ADD" << std::endl;
+        ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+        if (ret == -1)
+            std::cerr << "[!] epoll_ctl ADD also failed: " << strerror(errno) << std::endl;
+    }
 }

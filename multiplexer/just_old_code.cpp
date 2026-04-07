@@ -62,3 +62,6 @@ else if (pipe_to_client.count(fd))  // reading -> pipeOut[0]
 					close(fd);
 				}
 			}
+
+// Client request → Remove client FD from epoll → CGI starts → Wait for CGI_DONE → Re-add client FD
+// Client request → Remove client FD → Add pipe FDs → Read CGI chunks → Send to client → When EOF, re-add client FD

@@ -71,13 +71,17 @@ class socket_engine {
         void    set_server_side_fds(int s_fd);
         void    set_server_config_info(std::deque<ServerBlock> server_config);
         
-        void    add_pipeIn_event(int client_fd, int pipeIn);
-        void    add_pipeOut_event(int client_fd, int pipeOut);
+        int    add_pipeOut_event(int client_fd, int pipeOut);	// r
+        int    add_pipeIn_event(int client_fd, int pipeIn);		// w
         
         std::vector<int>        get_server_side_fds(void) const;
         std::map<int, Client>   &get_raw_client_data(void) const;
         const std::deque<ServerBlock> &get_server_config_info() const;
-        int one_tow;
+        // int one_tow;
+
+		void cgi_reading(int pipe_fd, uint32_t events);
+		void	cgi_writing(int pipe_fd, uint32_t events);
+
 };
 
 time_t time(time_t* timer);

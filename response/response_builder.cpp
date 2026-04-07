@@ -90,7 +90,10 @@ void response_builder::build_response()
                 handle_get();   // DONE [+]
 
             else if (this->current_client->req.getMethod() == POST_METHODE)
+			{
+				std::cout << BLUE << "POSTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << RESET << std::endl;
                 handle_post();  // DONE [-] working on it
+			}
 
             else if (this->current_client->req.getMethod() == DELETE_METHODE)
                 handle_delete();    // DONE [+]

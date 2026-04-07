@@ -2,6 +2,7 @@
 #include "../client.hpp"
 #include "../utils/utils.hpp"
 # include <fcntl.h>
+#include <algorithm>
 
 // size_t Cgi::CGI_MAX_OUTPUT = 10000000;
 size_t Cgi::CGI_MAX_OUTPUT = 200000000;
@@ -63,6 +64,10 @@ char **Cgi::getEnv() const
 }
 
 std::string Cgi::getResponse() const {
+    return response;
+}
+
+std::string &Cgi::getResponseRef() {
     return response;
 }
 
@@ -144,11 +149,14 @@ void collectEnv(Client &client, std::vector<std::string> &env)
 
     for (; it != headers.end(); it++)
     {
+        std::string key = it->first;
+        std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+        std::replace(key.begin(), key.end(), '-', '_');
 
-        if (it->first == "CONTENT_LENGTH" || it->first == "CONTENT_TYPE")
-            env.push_back(it->first + "=" + it->second);
+        if (key == "CONTENT_LENGTH" || key == "CONTENT_TYPE")
+            env.push_back(key + "=" + it->second);
         else
-            env.push_back("HTTP_" + it->first + "=" + it->second);
+            env.push_back("HTTP_" + key + "=" + it->second);
     }
 }
 
@@ -189,6 +197,7 @@ void Cgi::createPipes() {
     }
     fcntl(pipeIn[1], F_SETFL, O_NONBLOCK);
     fcntl(pipeOut[0], F_SETFL, O_NONBLOCK);
+
     state = EXECUTING;
 }
 
@@ -272,36 +281,81 @@ void Cgi::parentProcess(Client &client)
 
 // bool for the reading to called it once becouse of this
 
-void Cgi::reading()
+void Cgi::reading(int pipe_fd, unsigned int events, Client &client)
 {
-    const size_t buffer_size = 65536;
-
-    if (state == CGI_READING)
-    {
-        char buff[buffer_size];
-        int n = read(pipeOut[0], buff, sizeof(buff));
-        if (n > 0)
-            response.append(buff, n);
-        else if (n == 0)    // EOF
-        {
-            state = CGI_WAITING;
-            close(pipeOut[0]);
-        }
-        else {
-            if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                state = ERROR;
-                close(pipeOut[0]);
-            }
-        }
+    const size_t CHUNK_SIZE = 8192;
+    char buffer[CHUNK_SIZE];
+    
+    if (state != CGI_READING)
+        return;
+    
+    // Read from CGI stdout pipe
+    ssize_t n = read(pipe_fd, buffer, CHUNK_SIZE);
+    std::cout << "[DEBUG CGI] read() returned " << n << " bytes" << std::endl;
+    
+    if (n > 0) {
+        // Successfully read data
+        std::cout << "[DEBUG CGI] Appending " << n << " bytes to response buffer (total now: " << (response.size() + n) << ")" << std::endl;
+        response.append(buffer, n);
     }
+    else if (n == 0) {
+        // EOF from CGI
+        std::cout << "[DEBUG CGI] EOF reached, CGI finished. Total output: " << response.size() << " bytes" << std::endl;
+        state = CGI_WAITING;
+    }
+    else if (n == -1) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            // Real read error
+            std::cerr << "[DEBUG CGI] Read error: " << strerror(errno) << std::endl;
+            state = ERROR;
+        }
+        // EAGAIN/EWOULDBLOCK: just return, will try again on next epoll event
+    }
+    
+    // Always check process status and timeout
     checkResponseAndTime();
 }
 
-// reading_setup
-
-// add_pipeIn_event -> read
-
-// add_pipeOut_event -> write
+void Cgi::writing(int pipe_fd, unsigned int events, Client &client)
+{
+    if (state != CGI_READING && state != CGI_WAITING)
+        return;
+    
+    const std::string &body = client.req.getBody();
+    
+    // If no body, just close the pipe
+    if (body.empty()) {
+        close(pipe_fd);
+        return;
+    }
+    
+    // Write remaining body to CGI stdin
+    size_t remaining = body.size() - body_bytes_sent;
+    if (remaining == 0) {
+        // Already sent all
+        close(pipe_fd);
+        return;
+    }
+    
+    ssize_t sent = write(pipe_fd, body.c_str() + body_bytes_sent, remaining);
+    
+    if (sent > 0) {
+        body_bytes_sent += sent;
+        
+        // If all sent, close the write pipe
+        if (body_bytes_sent >= (off_t)body.size()) {
+            close(pipe_fd);
+        }
+    }
+    else if (sent == -1) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            // Real write error
+            state = ERROR;
+            close(pipe_fd);
+        }
+        // EAGAIN/EWOULDBLOCK: try again on next event
+    }
+}
 
 void Cgi::checkResponseAndTime()
 {
@@ -317,6 +371,11 @@ void Cgi::checkResponseAndTime()
     {
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
             state = ERROR;
+        else if (WIFSIGNALED(status))
+        {
+            std::cerr << "CGI process terminated by signal: " << WTERMSIG(status) << std::endl;
+            state = ERROR;
+        }
         else if (state == CGI_WAITING || state == CGI_READING)
             state = CGI_DONE;
     }
@@ -325,6 +384,7 @@ void Cgi::checkResponseAndTime()
         gettimeofday(&current, NULL);
         if (current.tv_sec - start.tv_sec > CGI_TIMEOUT)
         {
+			std::cout << BLUE << "WEEEEEE3333333333333333333333333" << RESET << std::endl;
             kill(pid, SIGTERM);
             state = ERROR;
         }
@@ -345,13 +405,7 @@ void Cgi::handleCGI(Client &client)
     if (this->state == EXECUTING)
         this->execution(client);
 
-    if (this->state == CGI_READING ||
-        this->state == CGI_WAITING)
-            this->reading();
-
-
     std::cout << "it's finish the cgi steps:" << this->state << std::endl;
-    // exit(1);
 }
 
 int	Cgi::getPipeOutFd() const

@@ -3,7 +3,8 @@
 
 // #define CGI_TIMEOUT 5
 // #define CGI_TIMEOUT 30
-#define CGI_TIMEOUT 60
+// #define CGI_TIMEOUT 60
+#define CGI_TIMEOUT 120
 
 #include <iostream>
 #include <stdlib.h>
@@ -61,6 +62,7 @@ class Cgi
 
 	// ----- new ---------
 	std::string getResponse() const;
+	std::string &getResponseRef();
 	int	getPipeOutFd() const;
 	int getPipeInFd() const;
 	// -------------------
@@ -74,7 +76,8 @@ class Cgi
     void childProcess();
     void parentProcess(Client &client);
     void checkResponseAndTime();
-    void reading();
+    void reading(int pipe_fd, unsigned int events, Client &client);
+    void writing(int pipe_fd, unsigned int events, Client &client);
     void handleCGI(Client &client);
 
 };
