@@ -26,8 +26,6 @@ void socket_engine::server_event(ssize_t fd)    // DONE [+]
     init_client_side(client_fd);
 }
 
-// -------------------------------------------------------------------------------
-
 void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
 {
     if (events & (EPOLLHUP | EPOLLERR)) {
@@ -40,6 +38,7 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             return ;
         }
     }
+
     if (events & EPOLLIN)   // READY TO READ
     {
         char raw_data[BUFFER_SIZE];
@@ -58,10 +57,12 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             if (req_stat == REQ_NOT_READY)
                 return ;
             
-            // >>> CGI
-            // -----------------------------------------------------------------------
+
+
+            // ------------------------------- CGI -----------------------------------
             // CGI_NOT_REQUIRED, CGI_DONE, ERROR
             this->raw_client_data[fd].cgiHandler.handleCGI(this->raw_client_data[fd]);
+            // -----------------------------------------------------------------------
             if (this->raw_client_data[fd].cgiHandler.state != CGI_NOT_REQUIRED)
             {
                 std::cout << "IT'S FUCKING CGI" << std::endl;
@@ -70,7 +71,6 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
             else {
                 std::cout << "IT'S NOT FUCKING CGI" << std::endl;
             }
-            exit(1);
             // -----------------------------------------------------------------------
 
             this->raw_client_data[fd].res.set_stat_code(req_stat);
@@ -118,24 +118,78 @@ void    socket_engine::client_event(ssize_t fd, uint32_t events) // DONE []
     }
 }
 
-void    socket_engine::process_connections(void)
+
+void socket_engine::process_connections(void)   // main func about events
 {
     while (true)
     {
-        // >>> epoll_fd -> is the pipe of the fds_table in the kernal
-        // >>> events -> is a array that hold the active fds
         int epoll_stat = epoll_wait(epoll_fd, events, MAX_EVENTS, TIMEOUT);
         for (int i = 0; i < epoll_stat; i++)
         {
             int fd = events[i].data.fd;
 
-            // >>> fd is a server fd or clietn fd
-            std::vector<int>::iterator is_server = std::find(server_side_fds.begin(), server_side_fds.end(), fd);
+            if (is_server(server_side_fds, fd))
+                server_event(fd);   // new-client
             
-            if (is_server != server_side_fds.end()) // New client + time(0)
-                server_event(fd);   // DONE [*]
-            else
-                client_event(fd, events[i].events);   // Recv/Send + Update time(0)
+            // -> modify_epoll_event(client_fd, EPOLLOUT); -> to read the result of the CGI
+            else if (pipe_to_client.count(fd))   // read CGI result
+            {
+                // here will read from CGI pipe and stream to client
+                int client_fd = pipe_to_client[fd];
+                Client &client = raw_client_data[client_fd];
+                client.last_activity = time(0);
+                std::cout << "[DEBUG] process_connections: handling pipe_to_client fd=" << fd << " client_fd=" << client_fd << std::endl;
+                // client.cgiHandler.reading(fd, events[i].events, client);
+                
+                // Check if CGI is done
+                if (client.cgiHandler.state == CGI_DONE || client.cgiHandler.state == ERROR)
+                {
+                    std::cout << "[DEBUG] CGI done, closing pipe " << fd << " and re-adding client " << client_fd << std::endl;
+                    int del_ret = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+                    if (del_ret == -1)
+                        std::cerr << "[!] epoll_ctl DEL failed: " << strerror(errno) << std::endl;
+                    close(fd);
+                    pipe_to_client.erase(fd);
+                    remove_fd_from_list(fd);
+                    
+                    // Build HTTP response with status and headers
+                    if (client.cgiHandler.state == ERROR) {
+                        client.res.set_stat_code(SERVER_ERROR);
+                        response_builder rb;
+                        // rb.set_client(client);
+                        rb.build_response();
+                    } else {
+                        // Build response with CGI output as body
+                        client.res.set_stat_code(OK);
+                        std::cout << "[DEBUG] Building response for CGI output..." << std::endl;
+                        // TODO: Parse CGI headers if needed, for now just send output as-is
+                        // The CGI handler captures the full HTTP response from the script
+                    }
+                    
+                    // Re-add client socket for response send
+                    modify_epoll_event(client_fd, EPOLLOUT);
+                }
+            }
+            // will be write just in case has a body
+            // request to send it to CGI
+            else if (pipe_write_to_client.count(fd))
+            {
+                int client_fd = pipe_write_to_client[fd];
+                Client &client = raw_client_data[client_fd];
+                client.last_activity = time(0);
+                // client.cgiHandler.writing(fd, events[i].events, client);
+                
+                // Check if body is fully written
+                // if (client.cgiHandler.body_bytes_sent >= (off_t)client.req.getBody().size())
+                {
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+                    pipe_write_to_client.erase(fd);
+                    remove_fd_from_list(fd);
+                }
+            }
+
+            else    // serv client event - CGI check
+                client_event(fd, events[i].events);
         }
         check_all_client_timeouts();
     }
