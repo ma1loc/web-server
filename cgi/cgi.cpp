@@ -297,11 +297,12 @@ void Cgi::reading(int pipe_fd, unsigned int events, Client &client)
         // Successfully read data
         std::cout << "[DEBUG CGI] Appending " << n << " bytes to response buffer (total now: " << (response.size() + n) << ")" << std::endl;
         response.append(buffer, n);
+        gettimeofday(&start, NULL);
     }
     else if (n == 0) {
-        // EOF from CGI
+        // EOF from CGI: all pipe data drained, process has exited (write end closed)
         std::cout << "[DEBUG CGI] EOF reached, CGI finished. Total output: " << response.size() << " bytes" << std::endl;
-        state = CGI_WAITING;
+        state = CGI_DONE;
     }
     else if (n == -1) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -341,6 +342,7 @@ void Cgi::writing(int pipe_fd, unsigned int events, Client &client)
     
     if (sent > 0) {
         body_bytes_sent += sent;
+        gettimeofday(&start, NULL);
         
         // If all sent, close the write pipe
         if (body_bytes_sent >= (off_t)body.size()) {
@@ -359,6 +361,10 @@ void Cgi::writing(int pipe_fd, unsigned int events, Client &client)
 
 void Cgi::checkResponseAndTime()
 {
+    // Nothing to do once CGI is fully done or already errored
+    if (state == CGI_DONE || state == ERROR)
+        return;
+
     if (response.size() > CGI_MAX_OUTPUT)
     {
         kill(pid, SIGTERM);
@@ -376,7 +382,10 @@ void Cgi::checkResponseAndTime()
             std::cerr << "CGI process terminated by signal: " << WTERMSIG(status) << std::endl;
             state = ERROR;
         }
-        else if (state == CGI_WAITING || state == CGI_READING)
+        // Do NOT set CGI_DONE when state == CGI_READING: the process exited but the
+        // kernel pipe buffer may still hold unread data. Keep reading until n==0 (EOF),
+        // which sets CGI_DONE directly. Only promote from CGI_WAITING (legacy path).
+        else if (state == CGI_WAITING)
             state = CGI_DONE;
     }
     else if (waited == 0)

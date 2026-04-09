@@ -29,6 +29,7 @@
 # define TIMEOUT_LIMIT 5
 # define QUEUE_LIMIT 128
 # define BUFFER_SIZE 8192
+// # define BUFFER_SIZE 65536
 // # define BUFFER_SIZE 10
 # define PROTOCOL_TYLE 0
 # define MAX_EVENTS 64

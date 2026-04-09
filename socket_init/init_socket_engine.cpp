@@ -91,6 +91,33 @@ void socket_engine::check_all_client_timeouts(void)
 
         if (it->second.close_connection)
         {
+            // Clean up any active CGI output pipes for this client before erasing it.
+            // Without this, stale pipe_to_client entries survive, get routed to whatever
+            // new client reuses the same fd number, and checkResponseAndTime() calls
+            // waitpid(0,...) (pid uninitialised on new client) which accidentally reaps
+            // other live CGI children.
+            for (std::map<int,int>::iterator p = pipe_to_client.begin(); p != pipe_to_client.end(); )
+            {
+                if (p->second == fd) {
+                    epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
+                    remove_fd_from_list(p->first);
+                    close(p->first);
+                    pipe_to_client.erase(p++);
+                } else
+                    ++p;
+            }
+            for (std::map<int,int>::iterator p = pipe_write_to_client.begin(); p != pipe_write_to_client.end(); )
+            {
+                if (p->second == fd) {
+                    epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
+                    remove_fd_from_list(p->first);
+                    close(p->first);
+                    pipe_write_to_client.erase(p++);
+                } else
+                    ++p;
+            }
+            if (it->second.cgiHandler.state == CGI_READING || it->second.cgiHandler.state == CGI_WAITING)
+                kill(it->second.cgiHandler.pid, SIGTERM);
             epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
             raw_client_data.erase(it++);
             remove_fd_from_list(fd);
@@ -106,18 +133,26 @@ void socket_engine::check_all_client_timeouts(void)
             {
 				if (p->second == fd)
                 {
-                    exit(1);    // even i run a CGI it's never exit
                     active_pipe_write = true;
                     break;
                 }
 			}
 			if (active_pipe_write) { ++it; continue; }
+            // Skip timeout when client is still waiting for CGI output
+            bool active_pipe_read = false;
+            for (std::map<int,int>::iterator p = pipe_to_client.begin(); p != pipe_to_client.end(); ++p)
+            {
+                if (p->second == fd) {
+                    active_pipe_read = true;
+                    break;
+                }
+            }
+            if (active_pipe_read) { ++it; continue; }
             // >>>>>>>>>> ADD THIS BLOCK HERE <<<<<<<<
             for (std::map<int,int>::iterator p = pipe_to_client.begin(); p != pipe_to_client.end(); )
             {
                 if (p->second == fd)  // this pipe belongs to the client we're about to erase
                 {
-                    exit(2);    // even i run a CGI it's never exit
                     epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
                     remove_fd_from_list(p->first);
                     kill(it->second.cgiHandler.pid, SIGTERM);
@@ -132,7 +167,6 @@ void socket_engine::check_all_client_timeouts(void)
 				p != pipe_write_to_client.end(); )
 			{
 				if (p->second == fd) {
-                    exit(1);    // even i run a CGI it's never exit
 					epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, p->first, NULL);
 					remove_fd_from_list(p->first);
 					close(p->first);
