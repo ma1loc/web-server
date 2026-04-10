@@ -54,8 +54,6 @@ class socket_engine {
         void    handle_pipe_read(int pipe_fd);
         void    handle_pipe_write(int pipe_fd);
         void    modify_epoll_event(ssize_t fd, uint32_t events);
-
-
     public:
         socket_engine();
         void    init_client_side(int fd);

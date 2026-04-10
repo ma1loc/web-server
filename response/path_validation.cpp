@@ -59,7 +59,12 @@ void    response_builder::path_validation()
     //     exit(200);
     // ----------------------------------------
 
-    this->path = join_root_path(current_client->location_conf->root, this->current_client->req.getPath());
+    std::string req_path = this->current_client->req.getPath();
+    const std::string &loc_path = current_client->location_conf->path;
+    if (req_path.size() >= loc_path.size() && req_path.substr(0, loc_path.size()) == loc_path)
+        req_path = req_path.substr(loc_path.size());
+    
+    this->path = join_root_path(current_client->location_conf->root, req_path);
     if (stat(path.c_str(), &statbuf) < 0) {
         this->current_client->res.set_stat_code(NOT_FOUND);
         return ;

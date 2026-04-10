@@ -126,7 +126,8 @@ void    socket_engine::terminate_client(int fd, std::string stat)
     remove_fd_from_list(fd);
     close(fd);
 
-    std::cerr << GREEN_S << "terminate_client stat ->" << stat << GREEN_E << std::endl;
+    if (!stat.empty())
+        std::cerr << GREEN_S << "terminate_client stat ->" << stat << GREEN_E << std::endl;
 }
 
 void    socket_engine::modify_epoll_event(ssize_t fd, uint32_t events)
