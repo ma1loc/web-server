@@ -40,20 +40,21 @@ class response_builder
         std::string     get_stat_code_path(unsigned int stat_code);
         void            generate_error_page();
         void            extract_host_info(std::string raw_req);
-        
+
+        // handling the rediction with the return
+        void            return_handling();
+
         void            set_header(void);
         void            set_body(void);
         void            handle_get();
         void            handle_post();
         void            handle_delete();
         void            serving_static_file();
-
-		
-		public:
+        
+    public:
         response_builder();
-		void	set_client(Client &c);
-		void	build_cgi_response(const std::string &cgi_output);
-        bool    init_response_builder(Client &current_client);
+        void    init_response_builder(Client &current_client);
+        void    resolve_request_path();
         void    validate_headers();
         void    build_response();
 

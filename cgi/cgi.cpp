@@ -1,29 +1,20 @@
 #include "cgi.hpp"
 #include "../client.hpp"
 #include "../utils/utils.hpp"
-# include <fcntl.h>
-#include <algorithm>
+#include <fcntl.h>
 
-// size_t Cgi::CGI_MAX_OUTPUT = 10000000;
-size_t Cgi::CGI_MAX_OUTPUT = 200000000;
+size_t Cgi::CGI_MAX_OUTPUT = 1000000000;
 
 Cgi::Cgi()
 {
+    sent = 0;
+    safeExit = true;
+    writeEnd = false;
+    needsInput = false;
+    closedAll = false;
+    sigTermSent = false;
     envp = NULL;
     argv = NULL;
-	body_bytes_sent = 0;
-}
-
-
-Cgi &Cgi::operator=(const Cgi &other)
-{
-    if (this != &other)
-    {
-        interpreter = other.interpreter;
-        extension = other.extension;
-        body_bytes_sent = other.body_bytes_sent;  // ← ADD THIS
-    }
-    return *this;
 }
 
 Cgi::Cgi(const Cgi &other)
@@ -31,7 +22,66 @@ Cgi::Cgi(const Cgi &other)
     *this = other;
 }
 
-Cgi::~Cgi() {}
+char **deepCopy(char **src)
+{
+    if (!src)
+        return NULL;
+
+    int i = 0;
+    for (i = 0; src[i]; i++)
+    {
+    }
+    char **copy = new char *[i + 1];
+    for (i = 0; src[i]; i++)
+        copy[i] = strdup(src[i]);
+    copy[i] = NULL;
+    return copy;
+}
+
+Cgi &Cgi::operator=(const Cgi &other)
+{
+    if (this != &other)
+    {
+        interpreter = other.interpreter;
+        extension = other.extension;
+        envp = deepCopy(other.envp);
+        argv = deepCopy(other.argv);
+        pipeIn[0] = other.pipeIn[0];
+        pipeIn[1] = other.pipeIn[1];
+        pipeOut[0] = other.pipeOut[0];
+        pipeOut[1] = other.pipeOut[1];
+        response = other.response;
+        state = other.state;
+        pid = other.pid;
+        status = other.status;
+        start.tv_sec = other.start.tv_sec;
+        start.tv_usec = other.start.tv_usec;
+        current.tv_sec = other.current.tv_sec;
+        current.tv_usec = other.current.tv_usec;
+        sent = other.sent;
+        writeEnd = other.writeEnd;
+        needsInput = other.needsInput;
+        safeExit = other.safeExit;
+        closedAll = other.closedAll;
+    }
+    return *this;
+}
+
+Cgi::~Cgi()
+{
+    if (envp)
+    {
+        for (size_t i = 0; envp[i]; i++)
+            free(envp[i]);
+        delete[] envp;
+    }
+    if (argv)
+    {
+        for (size_t i = 0; argv[i]; i++)
+            free(argv[i]);
+        delete[] argv;
+    }
+}
 
 void Cgi::setInterpreter(const std::string &interpreter)
 {
@@ -63,100 +113,80 @@ char **Cgi::getEnv() const
     return envp;
 }
 
-std::string Cgi::getResponse() const {
-    return response;
-}
-
-std::string &Cgi::getResponseRef() {
-    return response;
-}
-
 void Cgi::checkForCgi(Client &client)
 {
-    std::cout << "checkForCgi -----------------------------------------------------------" << std::endl;
-    std::cout << "client.req.getPath() -> " << client.req.getPath() << std::endl;
+    if (client.location_conf == NULL)
+    {
+        state = CGI_NOT_REQUIRED;
+        return;
+    }
     if (client.location_conf->cgi_handler.empty())
     {
         state = CGI_NOT_REQUIRED;
         return;
     }
-    size_t dot = client.res.get_path().rfind('.');
+    scriptPath = resolve_request_filesystem_path(client);
+    client.res.set_path(scriptPath);
 
-    std::cout << "client.res.get_path() -> " << client.res.get_path() << std::endl;
-    std::cout << "client.res.get_path().rfind('.') -> " << client.res.get_path().rfind('.') << std::endl;
-
-    if (dot == std::string::npos) {
+    size_t dot = scriptPath.rfind('.');
+    std::cout << "PATH GIVEN TO THE CGI ->" << scriptPath << std::endl;
+    if (dot == std::string::npos)
+    {
         state = CGI_NOT_REQUIRED;
         return;
     }
-
-    std::string exten = client.res.get_path().substr(dot);
-    std::cout << "client.res.get_path().substr(dot) -> " << client.res.get_path().substr(dot) << std::endl;
-
+    std::string exten = scriptPath.substr(dot);
     std::map<std::string, std::string>::const_iterator it =
         client.location_conf->cgi_handler.begin();
 
     for (; it != client.location_conf->cgi_handler.end(); it++)
     {
-        // std::cout << "enter" << std::endl;
         if (exten == it->first)
         {
             interpreter = it->second;
             extension = it->first;
             state = SETUP_CGI;
-
-            // std::cout << "it's a cgi" << std::endl;
-            // exit(1);
-
             return;
         }
     }
     state = CGI_NOT_REQUIRED;
-    std::cout << "-----------------------------------------------------------" << std::endl;
 }
 
 void collectEnv(Client &client, std::vector<std::string> &env)
 {
-    // ------------------ php used ----------------------------
     env.push_back("REQUEST_METHOD=" + client.req.getMethod());
-    env.push_back("QUERY_STRING=" + client.req.getQuery());
     env.push_back("SCRIPT_NAME=" + client.req.getPath());
-    // ---------------------------------------------------------
-
+    env.push_back("QUERY_STRING=" + client.req.getQuery());
     env.push_back("SERVER_PROTOCOL=" + client.req.getHttpVersion());
     env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     env.push_back("SERVER_SOFTWARE=Webserve");
-    env.push_back("REQUEST_URI=" + client.req.getPath() + client.req.getQuery());
+    env.push_back(
+        "REQUEST_URI=" + client.req.getPath() + client.req.getQuery());
     env.push_back("SERVER_NAME="); // hostname needed later
     env.push_back("SERVER_PORT=" + to_string(client.port));
     env.push_back("REDIRECT_STATUS=200");
 
-    // ------------- TODO: search about this two lines, if you need them ----------
-	// env.push_back("SCRIPT_FILENAME=" + client.res.get_path());
     char *abs = realpath(client.res.get_path().c_str(), NULL);
-    if (abs) {
+    if (abs)
+    {
         env.push_back("SCRIPT_FILENAME=" + std::string(abs));
         free(abs);
     }
     else
         env.push_back("SCRIPT_FILENAME=" + client.res.get_path());
-	
+
     env.push_back("PATH_INFO=" + client.req.getPath());
-    // ----------------------------------------------------------------------------
 
     std::map<std::string, std::string> headers = client.req.getHeaders();
     std::map<std::string, std::string>::iterator it = headers.begin();
 
     for (; it != headers.end(); it++)
     {
-        std::string key = it->first;
-        std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-        std::replace(key.begin(), key.end(), '-', '_');
 
-        if (key == "CONTENT_LENGTH" || key == "CONTENT_TYPE")
-            env.push_back(key + "=" + it->second);
+        if (it->first == "CONTENT_LENGTH" || it->first == "CONTENT_TYPE")
+            env.push_back(it->first + "=" + it->second);
         else
-            env.push_back("HTTP_" + key + "=" + it->second);
+            env.push_back("HTTP_" + it->first + "=" + it->second);
     }
 }
 
@@ -174,24 +204,43 @@ void Cgi::buildEnv(Client &client)
     envp[i] = NULL;
 }
 
-void Cgi::buildArg(Client &client)
+void Cgi::buildArg()
 {
     argv = new char *[3];
 
     argv[0] = strdup(interpreter.c_str());
-    argv[1] = strdup(client.res.get_path().c_str());
+    argv[1] = strdup(scriptPath.substr(scriptPath.rfind('/') + 1).c_str());
     argv[2] = NULL;
 }
 
 void Cgi::setupCgi(Client &client)
 {
+    sent = 0;
+    response.clear();
+    safeExit = true;
+    writeEnd = false;
+    closedAll = false;
+    sigTermSent = false;
+    needsInput = (client.req.getMethod() == "POST" && !client.req.getBody().empty());
+
     buildEnv(client);
-    buildArg(client);
+    buildArg();
     state = CREAT_PIPES;
 }
 
-void Cgi::createPipes() {
-    if (pipe(pipeIn) < 0 || pipe(pipeOut) < 0) {
+void Cgi::createPipes()
+{
+    if (pipe(pipeIn))
+    {
+        std::cerr << "PIPE FAILED" << std::endl;
+        state = ERROR;
+        return;
+    }
+    if (pipe(pipeOut))
+    {
+        std::cerr << "PIPE FAILED" << std::endl;
+        close(pipeIn[1]);
+        close(pipeIn[0]);
         state = ERROR;
         return;
     }
@@ -201,40 +250,45 @@ void Cgi::createPipes() {
     state = EXECUTING;
 }
 
-void Cgi::execution(Client &client)
+void Cgi::execution()
 {
     pid_t tmpid = fork();
     if (tmpid == -1)
     {
         std::cerr << "FORK FAILED" << std::endl;
         state = ERROR;
+        return;
     }
     if (tmpid == 0)
         this->childProcess();
     else
     {
         pid = tmpid;
-        this->parentProcess(client);
-        state = CGI_READING;
+        this->parentProcess();
+        state = CGI_READY; // this state mean the cgi is ready to pass fds for
+                           // epoll event
     }
 }
 
 void Cgi::childProcess()
 {
-    std::string script_path = argv[1];
-    std::string script_dir = script_path.substr(0, script_path.rfind('/'));
-    std::string script_name = script_path.substr(script_path.rfind('/') + 1);
+    std::string scriptDir = scriptPath.substr(0, scriptPath.rfind('/'));
 
-    if (!script_dir.empty())
-        chdir(script_dir.c_str());
+    if (!scriptDir.empty())
+        chdir(scriptDir.c_str());
 
-    free(argv[1]);
-    argv[1] = strdup(script_name.c_str());
+    if (dup2(pipeIn[0], STDIN_FILENO) == -1 ||
+        dup2(pipeOut[1], STDOUT_FILENO) == -1)
+    {
+        perror("dup2 failed :");
 
-    if (dup2(pipeIn[0], STDIN_FILENO) == -1)
+        close(pipeIn[1]);
+        close(pipeIn[0]);
+        close(pipeOut[0]);
+        close(pipeOut[1]);
+
         exit(1);
-    if (dup2(pipeOut[1], STDOUT_FILENO) == -1)
-        exit(1);
+    }
 
     close(pipeIn[1]);
     close(pipeIn[0]);
@@ -242,160 +296,157 @@ void Cgi::childProcess()
     close(pipeOut[1]);
 
     execve(argv[0], argv, envp);
-
-    write(STDOUT_FILENO, "EXECVE FAILED: ", 16);
-    // char *str = strerror(errno);
-    // write(STDOUT_FILENO, str, strlen(str));
+    perror("execve failed :");
     exit(1);
 }
 
-void Cgi::parentProcess(Client &client)
+void Cgi::parentProcess()
 {
-	(void)client;
     close(pipeIn[0]);
     close(pipeOut[1]);
-    // if (client.parse.body)
-    //     write(
-    //         pipeIn[1], client.req.getBody().c_str(), client.req.getBody().size());
-    // close(pipeIn[1]);
+
+    if (!needsInput)
+    {
+        close(pipeIn[1]);
+        writeEnd = true;
+    }
+
     gettimeofday(&start, NULL);
 }
 
-// pipeOut[0] -> reading
-// pipeIn[1] -> writing
-
-// pipeIn[1] → CGI writes
-// pipeOut[0] → your server reads → MUST be in epoll
-
-// pipeOut[0] // parent reads (server)
-// pipeOut[1] // child writes (CGI)
-
-// pipeIn[0]  // child reads (CGI)
-// pipeIn[1]  // parent writes (server)
-
-// ------------------------------------------------------------------
-// before performing reading i have to add the pipeOut to epoll???
-// pipeOut[0] -> server reading
-// pipeIn[1] -> server writing
-// ------------------------------------------------------------------
-
-// bool for the reading to called it once becouse of this
-
-void Cgi::reading(int pipe_fd, unsigned int events, Client &client)
+void Cgi::closeEverything(int epoll_fd, Client &client)
 {
-    const size_t CHUNK_SIZE = 8192;
-    char buffer[CHUNK_SIZE];
-    
-    if (state != CGI_READING)
-        return;
-    
-    // Read from CGI stdout pipe
-    ssize_t n = read(pipe_fd, buffer, CHUNK_SIZE);
-    std::cout << "[DEBUG CGI] read() returned " << n << " bytes" << std::endl;
-    
-    if (n > 0) {
-        // Successfully read data
-        std::cout << "[DEBUG CGI] Appending " << n << " bytes to response buffer (total now: " << (response.size() + n) << ")" << std::endl;
-        response.append(buffer, n);
-        gettimeofday(&start, NULL);
-    }
-    else if (n == 0) {
-        // EOF from CGI: all pipe data drained, process has exited (write end closed)
-        std::cout << "[DEBUG CGI] EOF reached, CGI finished. Total output: " << response.size() << " bytes" << std::endl;
-        state = CGI_DONE;
-    }
-    else if (n == -1) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            // Real read error
-            std::cerr << "[DEBUG CGI] Read error: " << strerror(errno) << std::endl;
-            state = ERROR;
-        }
-        // EAGAIN/EWOULDBLOCK: just return, will try again on next epoll event
-    }
-    
-    // Always check process status and timeout
-    checkResponseAndTime();
-}
-
-void Cgi::writing(int pipe_fd, unsigned int events, Client &client)
-{
-    if (state != CGI_READING && state != CGI_WAITING)
-        return;
-    
-    const std::string &body = client.req.getBody();
-    
-    // If no body, just close the pipe
-    if (body.empty()) {
-        close(pipe_fd);
-        return;
-    }
-    
-    // Write remaining body to CGI stdin
-    size_t remaining = body.size() - body_bytes_sent;
-    if (remaining == 0) {
-        // Already sent all
-        close(pipe_fd);
-        return;
-    }
-    
-    ssize_t sent = write(pipe_fd, body.c_str() + body_bytes_sent, remaining);
-    
-    if (sent > 0) {
-        body_bytes_sent += sent;
-        gettimeofday(&start, NULL);
-        
-        // If all sent, close the write pipe
-        if (body_bytes_sent >= (off_t)body.size()) {
-            close(pipe_fd);
-        }
-    }
-    else if (sent == -1) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            // Real write error
-            state = ERROR;
-            close(pipe_fd);
-        }
-        // EAGAIN/EWOULDBLOCK: try again on next event
-    }
-}
-
-void Cgi::checkResponseAndTime()
-{
-    // Nothing to do once CGI is fully done or already errored
-    if (state == CGI_DONE || state == ERROR)
-        return;
-
-    if (response.size() > CGI_MAX_OUTPUT)
+    if (!closedAll)
     {
-        kill(pid, SIGTERM);
-        state = ERROR;
-        return;
-    }
-
-    pid_t waited = waitpid(pid, &status, WNOHANG);
-    if (waited == pid)
-    {
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-            state = ERROR;
-        else if (WIFSIGNALED(status))
+        if (client.parse.body && !writeEnd)
         {
-            std::cerr << "CGI process terminated by signal: " << WTERMSIG(status) << std::endl;
-            state = ERROR;
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeIn[1], NULL);
+            close(pipeIn[1]);
         }
-        // Do NOT set CGI_DONE when state == CGI_READING: the process exited but the
-        // kernel pipe buffer may still hold unread data. Keep reading until n==0 (EOF),
-        // which sets CGI_DONE directly. Only promote from CGI_WAITING (legacy path).
-        else if (state == CGI_WAITING)
-            state = CGI_DONE;
+        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeOut[0], NULL);
+        close(pipeOut[0]);
+        closedAll = true;
     }
-    else if (waited == 0)
+}
+
+void Cgi::writing(int epoll_fd, unsigned int events, Client &client)
+{
+    if (!(events & EPOLLOUT))
+        return;
+
+    if (state != CGI_READY)
+        return;
+    std::string &body = client.req.getBody();
+
+    size_t remaining = body.size() - sent;
+
+    if (remaining == 0)
     {
-        gettimeofday(&current, NULL);
+        writeEnd = true;
+        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeIn[1], NULL);
+        close(pipeIn[1]);
+        return;
+    }
+
+    size_t chunk = remaining;
+    if (chunk > WRITE_READ_LIMIT)
+        chunk = WRITE_READ_LIMIT;
+
+    ssize_t written = write(pipeIn[1], body.c_str() + sent, chunk);
+
+    if (written > 0)
+    {
+        sent += written;
+        if (sent == body.size())
+        {
+            writeEnd = true;
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeIn[1], NULL);
+            close(pipeIn[1]);
+        }
+    }
+
+    if (written == -1)
+    {
+        closeEverything(epoll_fd, client);
+        state = ERROR;
+    }
+}
+
+void Cgi::reading(int epoll_fd, unsigned int events, Client &client)
+{
+    checkResponseAndTime(epoll_fd, client);
+
+    if (!(events & EPOLLIN) && !(events & EPOLLHUP))
+        return;
+
+    char buff[WRITE_READ_LIMIT];
+
+    int n = read(pipeOut[0], buff, WRITE_READ_LIMIT);
+
+    if (n > 0)
+        response.append(buff, n);
+    else if (n == 0 || (events & EPOLLHUP))
+    {
+        state = CGI_WAITING;
+        pid_t waited = waitpid(pid, &status, 0);
+        if ((waited == pid || waited == -1) && safeExit)
+            state = CGI_DONE;
+        else
+            state = ERROR;
+    }
+    else if (n == -1)
+    {
+        if (events & EPOLLHUP)
+        {
+            state = CGI_WAITING;
+            pid_t waited = waitpid(pid, &status, 0);
+            if ((waited == pid || waited == -1) && safeExit)
+                state = CGI_DONE;
+            else
+                state = ERROR;
+        }
+    }
+}
+
+void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
+{
+    pid_t wait = waitpid(pid, &status, WNOHANG);
+    if ((wait == pid || wait == -1) && sigTermSent)
+    {
+        state = ERROR;
+        std::cout << "STATE IS --->" << state << "AND CHILD TERMINATED !" << std::endl;
+        return;
+    }
+    gettimeofday(&current, NULL);
+    if ((wait == pid || wait == -1) && state == CGI_WAITING && safeExit)
+    {
+        state = CGI_DONE;
+        std::cout << "STATE IS --->" << state << "AND CGI DONE AND EXITED !" << std::endl;
+    }
+    else
+    {
         if (current.tv_sec - start.tv_sec > CGI_TIMEOUT)
         {
-			std::cout << BLUE << "WEEEEEE3333333333333333333333333" << RESET << std::endl;
-            kill(pid, SIGTERM);
-            state = ERROR;
+            if (!sigTermSent)
+            {
+                closeEverything(epoll_fd, client);
+                safeExit = false;
+                kill(pid, SIGTERM);
+                sigTermSent = true;
+                wait = waitpid(pid, &status, WNOHANG);
+                if (wait == pid)
+                    state = ERROR;
+            }
+            else
+            {
+                gettimeofday(&current, NULL);
+                if ((current.tv_sec - start.tv_sec) > (CGI_TIMEOUT + 3))
+                {
+                    kill(pid, SIGKILL);
+                    waitpid(pid, &status, 0);
+                    state = ERROR;
+                }
+            }
         }
     }
 }
@@ -404,24 +455,25 @@ void Cgi::handleCGI(Client &client)
 {
     if (this->state == CHECKING)
         this->checkForCgi(client);
-
-    if (this->state == SETUP_CGI) 
+    if (this->state == SETUP_CGI)
         this->setupCgi(client);
-
     if (this->state == CREAT_PIPES)
         this->createPipes();
-
     if (this->state == EXECUTING)
-        this->execution(client);
-
-    std::cout << "it's finish the cgi steps:" << this->state << std::endl;
+        this->execution();
 }
 
-int	Cgi::getPipeOutFd() const
+int Cgi::getPipeOutFd() const
 {
-	return (pipeOut[0]);
+    return pipeOut[0];
 }
 
-int Cgi::getPipeInFd() const {
-	return pipeIn[1];
+int Cgi::getPipeInFd() const
+{
+    return pipeIn[1];
+}
+
+std::string &Cgi::getCgiResponse()
+{
+    return response;
 }

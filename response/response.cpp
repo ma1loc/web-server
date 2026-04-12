@@ -23,7 +23,8 @@ void    response::set_path(std::string path) {
     this->path = path;
 }
 
-void    response::set_raw_response(std::string raw_res) {
+// void    response::set_raw_response(std::string raw_res) {
+void    response::set_raw_response(std::string &raw_res) {
     this->final_raw_response = raw_res;
 }
 
@@ -53,7 +54,8 @@ std::string response::get_path(void) const {
     return (this->path);
 }
 
-std::string response::get_raw_response(void) {
+// std::string response::get_raw_response(void) {
+std::string &response::get_raw_response(void) {
     return (this->final_raw_response);
 }
 
@@ -82,14 +84,14 @@ off_t response::get_bytes_sent(void) const {
 }
 
 
-bool    response::stream_response_to_client(int fd)
+bool            response::stream_response_to_client(int fd)
 {
     if (this->bytes_sent < (off_t)final_raw_response.size())
     {
-        // MSG_NOSIGNAL -> ignore SIGPIPE(send() in case of dead socket)
         ssize_t send_stat = send(fd, final_raw_response.c_str() + this->bytes_sent, this->final_raw_response.size() - this->bytes_sent, MSG_NOSIGNAL);
         if (send_stat == -1)
             return (false);
+
         this->set_bytes_sent(this->bytes_sent + send_stat);
     }
     else

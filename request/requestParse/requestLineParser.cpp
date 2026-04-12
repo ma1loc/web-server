@@ -116,7 +116,6 @@ int parseRequestLine(Client &client, std::string &data)
         return BAD_REQUEST;
     if (!checkSetMethod(tokens[0], client, client.parse.methods))
         return METHOD_NOT_ALLOWED;
-        // return BAD_REQUEST;
     if (!checkSetPathQuery(client, tokens[1]))
         return BAD_REQUEST;
     return checkSetHttp(client, tokens[2]);

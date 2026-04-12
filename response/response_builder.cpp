@@ -5,16 +5,16 @@
 
 response_builder::response_builder(): is_body_ready(false), is_error_page(false) {};
 
-bool    response_builder::init_response_builder(Client &current_client)
-{
+void    response_builder::init_response_builder(Client &current_client) {
     this->current_client = &current_client;
+}
+
+void    response_builder::resolve_request_path()
+{
     if (this->current_client->res.get_stat_code() != OK)
-        return (false);
-    path_validation();  // TOKNOW: auto-index gen
+        return;
+    path_validation();
     this->current_client->res.set_path(this->path);
-    if (this->current_client->res.get_stat_code() == OK)
-        return (true);
-    return (false);
 }
 
 std::string response_builder::index_file_iterator(const std::string &full_path)
@@ -72,17 +72,19 @@ void    response_builder::serving_static_file()
 void response_builder::build_response()
 {
     // rm-me
-    std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
-    std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
-    std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
-
+    // std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
+    // std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
+    // std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
 
     if (this->current_client->res.get_stat_code() != OK)
         generate_error_page();  // DONE [-] working on it
     else
     {
-        // path_validation();  // TOKNOW: auto-index gen
-        if (this->current_client->res.get_stat_code() != OK)
+        resolve_request_path();  // TOKNOW: auto-index gen
+        int stat = this->current_client->res.get_stat_code();
+        if (stat >= 300 && stat < 400)
+            ;
+        else if (stat != OK)
             generate_error_page();  // DONE [-] working on it
         else
         {
@@ -90,33 +92,14 @@ void response_builder::build_response()
                 handle_get();   // DONE [+]
 
             else if (this->current_client->req.getMethod() == POST_METHODE)
-			{
-				std::cout << BLUE << "POSTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << RESET << std::endl;
                 handle_post();  // DONE [-] working on it
-			}
 
             else if (this->current_client->req.getMethod() == DELETE_METHODE)
                 handle_delete();    // DONE [+]
         }
+
     }
 
-    std::cout << READ_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << READ_E << std::endl;
+    // std::cout << READ_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << READ_E << std::endl;
     this->current_client->res.set_raw_response(response_holder);
 }
-
-// in your response_builder .cpp file
-void response_builder::build_cgi_response(const std::string &cgi_output)
-{
-    this->current_client->res.set_stat_code(OK);
-
-    std::string raw;
-    raw.append(current_client->res.get_start_line());
-    raw.append(cgi_output);
-
-    std::cout << READ_S << "--------- START cgi_output\n" << raw << "\n------- END cgi_output" << READ_E << std::endl;
-    
-    this->current_client->res.set_raw_response(raw);
-    // exit(111);
-}
-
-void response_builder::set_client(Client &c) { this->current_client = &c; }

@@ -21,7 +21,9 @@ std::string validate_upload_path(Client &current_client)
 {
     std::string file_name = extracting_file_name(current_client.req.getHeaders());
     std::string file_path;
-    file_path = join_root_path(current_client.location_conf->root, current_client.req.getPath());
+    std::string req_path = resolve_location_relative_path(current_client.req.getPath(),
+            current_client.location_conf->path);
+    file_path = join_root_path(current_client.location_conf->root, req_path);
     if (!is_dir_exist(file_path)) {
         current_client.res.set_stat_code(NOT_FOUND);
         return ("");

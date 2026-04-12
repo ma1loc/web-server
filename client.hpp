@@ -13,9 +13,6 @@
 # define READ_S "\033[31m"
 # define READ_E "\033[0m"
 
-#define BLUE "\033[34m"
-#define RESET "\033[0m"
-
 // default extansion in case (No name, No content-type)
 # define DEFAULT_EXTENSION ".txt"
 // how the browser threat the data
@@ -45,18 +42,19 @@ struct Client
 	reqParse parse;
     response res;
     bool    reqReady;
-    unsigned int    last_activity;
-    bool            close_connection;
 
     // cgi
     Cgi cgiHandler;
-
     // serving static file
+    // -----------------------------
     bool            is_serving_file;
     int             static_file_fd;
     off_t           file_size;
     off_t           bytes_sent;
+    // -----------------------------
 
+    unsigned int    last_activity;
+    bool            close_connection;
 };
 
 void inisializeClient(Client &client);

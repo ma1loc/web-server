@@ -106,12 +106,11 @@ int collectBodyByChunks(Client &client, std::string &remain)
             UpperCaseBodyBytes(bytesLine);
             int bytes = strToBase(
                 bytesLine,
-				2147483647,
-                // client.location_conf->client_max_body_size,
+                client.location_conf->client_max_body_size,
                 "0123456789ABCDEF"
             );
             if (bytes == -1)
-                return BAD_REQUEST;
+                return PAYLOAD_TOO_LARGE;
             remain.erase(0, end + 2);
             if (bytes == 0)
                 client.parse.chunkState = FINALCRLF;

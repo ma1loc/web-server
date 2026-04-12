@@ -10,6 +10,7 @@
 # define CREATED 201
 # define NO_CONTENT 204
 # define MOVED_PERMANENTLY 301
+# define FOUND 302
 # define BAD_REQUEST 400
 # define FORBIDDEN_ACCESS 403
 # define NOT_FOUND 404
@@ -50,7 +51,8 @@ class response  // DONE[]
         void    set_static_file_fd(int fd);
         void    set_stat_code(unsigned short int stat_code);
         void    set_path(std::string path);
-        void    set_raw_response(std::string raw_res);
+        // void    set_raw_response(std::string raw_res);
+        void    set_raw_response(std::string &raw_res);
         void    set_file_size(off_t file_size);
         void    set_bytes_sent(off_t bytes_sent);
 
@@ -60,7 +62,8 @@ class response  // DONE[]
         ssize_t             get_content_length(void) const;
         std::string         get_path(void) const;
         std::string         get_start_line(void) const;
-        std::string         get_raw_response(void);
+        // std::string         get_raw_response(void);
+        std::string         &get_raw_response(void);
         int                 get_static_file_fd(void) const;
         off_t               get_file_size(void) const;
         off_t               get_bytes_sent(void) const;
