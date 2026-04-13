@@ -86,7 +86,7 @@ void    response_builder::path_validation()
     }
 	
     this->path = resolve_request_filesystem_path(*this->current_client);
-    std::cout << "[>] final path -> " << this->path << std::endl;
+    // std::cout << "[>] final path -> " << this->path << std::endl;
 	// RETURN THE REDIRECTION PATH IF EXIST
 	if (!this->current_client->location_conf->redirection.empty())
     {
@@ -104,11 +104,11 @@ void    response_builder::path_validation()
     }
     if (S_ISDIR(statbuf.st_mode))
     {   
-        std::cout << "[+] DIR REQUESTED HEEEEEEEEEEEEEREEEEEEEEEE" << std::endl;
-        std::cout << "this->path -> " << this->path << std::endl;
+        // std::cout << "[+] DIR REQUESTED HEEEEEEEEEEEEEREEEEEEEEEE" << std::endl;
+        // std::cout << "this->path -> " << this->path << std::endl;
 
         index = index_file_iterator(this->path);
-        std::cout << "INDEX -> " << index << std::endl;
+        // std::cout << "INDEX -> " << index << std::endl;
         if (!index.empty())     // here will server the static files .html
             this->path = index;
         else if (index.empty() && current_client->location_conf->autoindex)

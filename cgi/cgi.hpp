@@ -1,7 +1,7 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#define CGI_TIMEOUT      120
+#define CGI_TIMEOUT      5
 // #define WRITE_READ_LIMIT 1048576
 #define WRITE_READ_LIMIT 65000
 

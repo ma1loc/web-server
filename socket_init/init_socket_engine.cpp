@@ -84,12 +84,9 @@ void socket_engine::check_all_client_timeouts(void)
 
 void socket_engine::terminate_client(int fd, std::string stat)
 {
-    // delete client socket from epoll table
     if (epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1)
         std::cerr << "[!] epoll_ctl EPOLL_CTL_DEL failed: " << strerror(errno) << std::endl;
 
-    // check if that client has any pipe_in/out for CGI to close it
-    // -----------------------------------------------------------------------------------------
     std::map<int, int>::iterator it_r = pipe_to_client.begin();
     std::map<int, int>::iterator it_w = pipe_write_to_client.begin();
     for ( ; it_r != pipe_to_client.end(); ) {
@@ -113,15 +110,13 @@ void socket_engine::terminate_client(int fd, std::string stat)
         else
             ++it_w;
     }
-    // -----------------------------------------------------------------------------------------
-
 
     this->raw_client_data.erase(fd);
     remove_fd_from_list(fd);
     close(fd);
 
     if (!stat.empty())
-        std::cerr << GREEN_S << "terminate_client stat ->" << stat << GREEN_E << std::endl;
+        std::cerr << RED << "terminate_client stat ->" << stat << RSET << std::endl;
 }
 
 void socket_engine::modify_epoll_event(ssize_t fd, uint32_t events)

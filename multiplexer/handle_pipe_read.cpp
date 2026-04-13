@@ -2,14 +2,36 @@
 # include "../response_builder.hpp"
 # include "../utils/utils.hpp"
 
-
+// it's correct
 void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
 {
     int client_fd = pipe_to_client[pipe_fd];
     Client &client = raw_client_data[client_fd];
     client.last_activity = time(0);
 
-    client.cgiHandler.reading(epoll_fd, events, client);
+
+    /*  TODO - TO-KNOW:
+        handling pipe-read with your if statment is not correct
+        becouse once you read you change stat to CGI_WAITING
+        that mean's your not reading again ever
+
+        CGI_READY -> child running -> pipe events active
+        by calling the handle_pipe_read() -> calling cgi.reading()
+        reading():
+            if bytes > 0:
+                append output
+            if EOF/HUP:
+                set CGI_WAITING -> stdout done, child may still exit
+    */
+    // if i include this block
+    if (client.cgiHandler.state == CGI_READY) {
+        // std::cout << "readinggggggggggggggggggggg" << std::endl;
+        client.cgiHandler.reading(epoll_fd, events, client);
+    }
+    
+    // i will remove this line
+    // client.cgiHandler.reading(epoll_fd, events, client);
+    // std::cout << "readinggggggggggggggggggggg" << std::endl;
 
     if (client.cgiHandler.state == CGI_DONE || client.cgiHandler.state == ERROR)
     {

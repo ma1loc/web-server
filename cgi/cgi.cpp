@@ -115,11 +115,6 @@ char **Cgi::getEnv() const
 
 void Cgi::checkForCgi(Client &client)
 {
-    if (client.location_conf == NULL)
-    {
-        state = CGI_NOT_REQUIRED;
-        return;
-    }
     if (client.location_conf->cgi_handler.empty())
     {
         state = CGI_NOT_REQUIRED;
@@ -127,9 +122,7 @@ void Cgi::checkForCgi(Client &client)
     }
     scriptPath = resolve_request_filesystem_path(client);
     client.res.set_path(scriptPath);
-
     size_t dot = scriptPath.rfind('.');
-    std::cout << "PATH GIVEN TO THE CGI ->" << scriptPath << std::endl;
     if (dot == std::string::npos)
     {
         state = CGI_NOT_REQUIRED;
@@ -193,7 +186,7 @@ void collectEnv(Client &client, std::vector<std::string> &env)
 void Cgi::buildEnv(Client &client)
 {
     std::vector<std::string> env;
-    size_t i;
+    size_t  i;
 
     collectEnv(client, env);
     i = env.size();
@@ -221,8 +214,8 @@ void Cgi::setupCgi(Client &client)
     writeEnd = false;
     closedAll = false;
     sigTermSent = false;
-    needsInput = (client.req.getMethod() == "POST" && !client.req.getBody().empty());
 
+    needsInput = (client.req.getMethod() == "POST" && !client.req.getBody().empty());
     buildEnv(client);
     buildArg();
     state = CREAT_PIPES;
@@ -367,7 +360,7 @@ void Cgi::writing(int epoll_fd, unsigned int events, Client &client)
 
     if (written == -1)
     {
-        closeEverything(epoll_fd, client);
+        // closeEverything(epoll_fd, client);
         state = ERROR;
     }
 }
@@ -386,35 +379,17 @@ void Cgi::reading(int epoll_fd, unsigned int events, Client &client)
     if (n > 0)
         response.append(buff, n);
     else if (n == 0 || (events & EPOLLHUP))
-    {
         state = CGI_WAITING;
-        pid_t waited = waitpid(pid, &status, 0);
-        if ((waited == pid || waited == -1) && safeExit)
-            state = CGI_DONE;
-        else
-            state = ERROR;
-    }
-    else if (n == -1)
-    {
-        if (events & EPOLLHUP)
-        {
-            state = CGI_WAITING;
-            pid_t waited = waitpid(pid, &status, 0);
-            if ((waited == pid || waited == -1) && safeExit)
-                state = CGI_DONE;
-            else
-                state = ERROR;
-        }
-    }
 }
 
 void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
 {
+    (void)client;
+    (void)epoll_fd;
     pid_t wait = waitpid(pid, &status, WNOHANG);
     if ((wait == pid || wait == -1) && sigTermSent)
     {
         state = ERROR;
-        std::cout << "STATE IS --->" << state << "AND CHILD TERMINATED !" << std::endl;
         return;
     }
     gettimeofday(&current, NULL);
@@ -429,7 +404,6 @@ void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
         {
             if (!sigTermSent)
             {
-                closeEverything(epoll_fd, client);
                 safeExit = false;
                 kill(pid, SIGTERM);
                 sigTermSent = true;
