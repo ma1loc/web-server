@@ -18,6 +18,7 @@ Session& cookies_and_sessions_logic(SessionManager& sessionM, Client& client)
             return sessionM.createSession();
         if (sessionM.sessionExists(SessionID))
         {
+            sessionM.sessionTimeCheck(SessionID);
             Session& Ses = sessionM.getSession(SessionID);
             Ses.is_new = false;
             Ses.last_access = std::time(0);
