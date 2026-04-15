@@ -53,8 +53,8 @@ Session& SessionManager::createSession()
     // storing session obj in sessions map
     Ses.last_access = std::time(0);
     Ses.id = sessionID;
-    sessions[sessionID] = Ses;
     Ses.is_new = true;
+    sessions[sessionID] = Ses;
     return getSession(sessionID);
 }
 
