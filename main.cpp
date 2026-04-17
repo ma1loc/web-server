@@ -16,14 +16,13 @@ int main(int ac, char **av)
     std::signal(SIGPIPE, SIG_IGN);
     std::signal(SIGINT, signal_handler);
     std::deque<ServerBlock> ServerConfig;
+    std::string fileName;
 
     if (ac < 2)
-    {
-        std::cout << "Error: file is missing" << std::endl;
-        s_engine.free_fds_list();
-        return 1;
-    }
-    std::ifstream infile(av[1]);
+        fileName = "./config.conf";
+    else
+        fileName = av[1];
+    std::ifstream infile(fileName.c_str());
     std::string fileContent((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     if (infile.fail())
     {

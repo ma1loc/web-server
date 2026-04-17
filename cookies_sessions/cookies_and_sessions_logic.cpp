@@ -7,10 +7,10 @@ Session& cookies_and_sessions_logic(SessionManager& sessionM, Client& client)
     std::string SessionID;
     std::map<std::string, std::string> data;
 
-
-    if (client.req.getHeaders().find("cookie") != client.req.getHeaders().end())
+    
+    if (client.req.getHeaders().find("COOKIE") != client.req.getHeaders().end())
     {
-        CookieHeader = client.req.getHeaders()["cookie"];
+        CookieHeader = client.req.getHeaders()["COOKIE"];
         data = parseCookies(CookieHeader);
         if (!data["sessionId"].empty())
             SessionID = data["sessionId"];
