@@ -13,6 +13,7 @@ void    response_builder::resolve_request_path()
 {
     if (this->current_client->res.get_stat_code() != OK)
         return;
+    // std::cout << "inter to path_validation" << std::endl;
     path_validation();
     this->current_client->res.set_path(this->path);
 }
@@ -51,10 +52,9 @@ void    response_builder::serving_static_file()
     this->current_client->res.set_static_file_fd(fd);
     this->current_client->is_serving_file = true;
 
-    std::cout << "[>] static file: " << this->path << " size: " << st.st_size << std::endl; // rm-me
     current_client->res.set_file_size(st.st_size);
 
-    // ______________________________________header______________________________________
+    // >>> header init
     this->header_buff.append(current_client->res.get_start_line());
     this->header_buff.append("Server: Webserv\r\n");
     this->header_buff.append("Date: " + get_time() + "\r\n");
@@ -63,7 +63,6 @@ void    response_builder::serving_static_file()
     else
         this->header_buff.append("Content-Type: " + extension_to_media_type(this->path) + "\r\n");
     this->header_buff.append("Content-Length: " + to_string(st.st_size) + "\r\n\r\n");
-    // __________________________________________________________________________________
 
     this->response_holder = header_buff;
 }
@@ -71,17 +70,14 @@ void    response_builder::serving_static_file()
 // TODO-LATER: Methode not allowed
 void response_builder::build_response()
 {
-    // rm-me
-    std::cout << READ_S << "--------- Methode: " << current_client->req.getMethod() << READ_E << std::endl;
-    std::cout << READ_S << "--------- Path: " << current_client->req.getPath() << READ_E << std::endl;
-    std::cout << "[>] STATUS CODE " << current_client->res.get_stat_code() << std::endl;
-
-
+    // std::cout << "build_response interrrr" << std::endl;
+    // std::cout << "first: " << this->current_client->res.get_stat_code() << std::endl;
     if (this->current_client->res.get_stat_code() != OK)
         generate_error_page();  // DONE [-] working on it
     else
     {
         resolve_request_path();  // TOKNOW: auto-index gen
+        // std::cout << "second: " << this->current_client->res.get_stat_code() << std::endl;
         int stat = this->current_client->res.get_stat_code();
         if (stat >= 300 && stat < 400)
             ;
@@ -100,7 +96,5 @@ void response_builder::build_response()
         }
 
     }
-
-    std::cout << READ_S << "--------- START RESPONSE\n" << response_holder << "\n------- END RESPONSE" << READ_E << std::endl;
     this->current_client->res.set_raw_response(response_holder);
 }
