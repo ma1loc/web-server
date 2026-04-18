@@ -77,6 +77,7 @@ class response  // DONE[]
         bool                get_is_cookie_set() const;
         void                add_set_cookie_header(const std::string& header_value);
         const std::vector<std::string>& get_set_cookie_headers() const;
+        void                set_is_cookie_false();
 
         bool                stream_response_to_client(int fd);
 };

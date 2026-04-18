@@ -61,7 +61,10 @@ void socket_engine::check_all_client_timeouts(void)
         int fd = it->first;
 
         if(it->second.cgiHandler.state == CGI_READY || it->second.cgiHandler.state == CGI_WAITING)
+        {
             it->second.cgiHandler.checkResponseAndTime();
+            it->second.last_activity = now;
+        }
 
         if (it->second.close_connection)
         {
