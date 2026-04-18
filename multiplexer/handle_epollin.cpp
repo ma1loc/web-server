@@ -15,22 +15,27 @@ void    socket_engine::handle_epollin(ssize_t fd)
     {
         this->raw_client_data[fd].last_activity = time(0);
         std::string raw_data_buff(raw_data, recv_stat);
+
+        // rm-me
+        std::cout << RED << raw_data_buff;
+
         int req_stat = parseRequest(this->raw_client_data[fd], raw_data_buff);
         if (req_stat == REQ_NOT_READY)
             return ;
-
+        // exit(111);
         // cookie and session management
         // -----------------------------------------------------------------------------------------------------------
+        // session_manager.print_sessions(); // Debug: print current sessions before processing the request
         // Session& cookie = cookies_and_sessions_logic(session_manager, this->raw_client_data[fd]);
         // if(cookie.is_new) {   // new cookie created, add Set-Cookie header to the response
-        //     exit(11);
-        //     std::cout << GREEN << "[+] New session created with ID: " << cookie.id << RSET << std::endl;
+        //     // exit(11);
+        //     std::cout << YELLOW << "[+] New session created with ID: " << cookie.id << RSET << std::endl;
+
         //     this->raw_client_data[fd].res.add_set_cookie_header("sessionId=" + cookie.id + "; Path=/; HttpOnly");
         // }
         // else // here we alrady have a session
         //     std::cout << GREEN << "[+] Existing session accessed with ID: " << cookie.id << RSET << std::endl;
-        // -----------------------------------------------------------------------------------------------------------
-
+        // // -----------------------------------------------------------------------------------------------------------
 
         // TODO: move this log to a new method for better readability
         // std::string request_log(client &client, int fd);

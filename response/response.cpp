@@ -147,3 +147,8 @@ const std::vector<std::string>& response::get_set_cookie_headers() const
 {
     return this->set_cookie_headers;
 }
+
+void    response::set_is_cookie_false()
+{
+    this->is_cooke_set = false;
+}
