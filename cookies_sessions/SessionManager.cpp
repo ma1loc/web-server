@@ -20,7 +20,7 @@ Session& SessionManager::getSession( const std::string& sessionId)
 {
 
     if (sessions.find(sessionId) != sessions.end())
-        return getSession(sessionId);
+        return sessions[sessionId];
     else
         return createSession();
 }
