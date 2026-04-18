@@ -45,8 +45,5 @@ std::map<std::string, std::string>&  parseCookies(std::string header)
         cookie.SetSessionVal(splited_by_equal_sign[i], splited_by_equal_sign[i + 1]);
         i += 2;
     }
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-    for(std::map<std::string, std::string>::iterator it = cookie.data.begin(); it != cookie.data.end(); ++it)
-        std::cout << it->first << " --> " << it->second << std::endl;
     return cookie.GetData();
 }
