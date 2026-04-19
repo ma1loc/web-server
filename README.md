@@ -155,4 +155,5 @@ Test multiple workers(20) doing multiple times(5): Post on /directory/youpi.bla 
 GG, So far so good! Run your own tests now! :D
 ********************************************************************************
 
-Line of the GIF
+<img width="1280" height="699" alt="ezgif com-cut" src="https://github.com/user-attachments/assets/bc72d75e-19db-4c20-8baa-75aa78b756f4" />
+
