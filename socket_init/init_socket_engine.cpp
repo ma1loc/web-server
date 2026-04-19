@@ -49,8 +49,9 @@ void socket_engine::set_server_config_info(std::deque<ServerBlock> server_config
     this->server_config_info = server_config_info;
 }
 
-void socket_engine::check_all_client_timeouts(void)
+void socket_engine::timeout_monitoring(void)
 {
+
     time_t now = time(0);
     std::map<int, Client>::iterator it = raw_client_data.begin();
 
@@ -60,7 +61,10 @@ void socket_engine::check_all_client_timeouts(void)
         int fd = it->first;
 
         if(it->second.cgiHandler.state == CGI_READY || it->second.cgiHandler.state == CGI_WAITING)
-            it->second.cgiHandler.checkResponseAndTime(epoll_fd, it->second);
+        {
+            it->second.cgiHandler.checkResponseAndTime();
+            it->second.last_activity = now;
+        }
 
         if (it->second.close_connection)
         {

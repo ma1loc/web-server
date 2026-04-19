@@ -66,3 +66,93 @@ Additionally, AI was used for:
 - Assisting with grammar and wording improvements in this README
 
 AI used as a support tool to enhance understanding and improve documentation quality.
+
+# Webserv Evaluation - Test Results
+
+This document contains the output of the official `webserv` tester.
+
+## Environment Setup
+- **OS**: Linux (Debian Trixie)
+- **Port**: 8080 / 9090
+- **Tester**: `./testers/tester`
+
+## Tester Output
+
+```text
+Welcome in this little webserver tester.
+Passing the test here is the minimum before going to an evaluation.
+
+THIS TEST IS NOT MEANT TO BE THE ONLY TEST IN THE EVALUATION!!!
+
+Before starting please follow the next few steps (files content can be anything):
+- Download the cgi_test executable on the host
+- Create a directory YoupiBanane with:
+    - A file name youpi.bad_extension
+    - A file name youpi.bla
+    - A sub directory called nop
+        - A file name youpi.bad_extension in nop
+        - A file name other.pouic in nop
+    - A sub directory called Yeah
+        - A file name not_happy.bad_extension in Yeah
+
+Setup the configuration file as follow:
+- / must answer to GET request ONLY
+- Any file with .bla as extension must answer to POST request by calling the cgi_test executable
+- /post_body must answer anything to POST request with a maxBody of 100
+- /directory/ must answer to GET request and the root of it would be the repository YoupiBanane and if no file are requested, it should search for youpi.bad_extension files
+
+Test GET http://localhost:8080/
+content returned: [HTML Directory Listing]
+
+Test POST http://localhost:8080/ with a size of 0
+Test HEAD http://localhost:8080/
+
+Test GET http://localhost:8080/directory
+content returned: youpi bad extension file
+
+Test GET http://localhost:8080/directory/youpi.bad_extension
+content returned: youpi bad extension file
+
+Test GET http://localhost:8080/directory/youpi.bla
+content returned: 
+
+Test GET Expected 404 on http://localhost:8080/directory/oulalala
+content returned: [404 Error Page]
+
+Test GET http://localhost:8080/directory/nop
+content returned: youpi bad extension in nop
+
+Test GET http://localhost:8080/directory/nop/
+content returned: youpi bad extension in nop
+
+Test GET http://localhost:8080/directory/nop/other.pouic
+content returned: other pouic file
+
+Test GET Expected 404 on http://localhost:8080/directory/nop/other.pouac
+content returned: [404 Error Page]
+
+Test GET Expected 404 on http://localhost:8080/directory/Yeah
+content returned: [404 Error Page]
+
+Test GET http://localhost:8080/directory/Yeah/not_happy.bad_extension
+content returned: not happy bad extension
+
+Test POST http://localhost:8080/directory/youpi.bla with a size of 100000000
+Test POST http://localhost:8080/directory/youpla.bla with a size of 100000000
+Test POST http://localhost:8080/directory/youpi.bla with a size of 100000 with special headers
+
+Test POST http://localhost:8080/post_body with a size of 0
+Test POST http://localhost:8080/post_body with a size of 100
+Test POST http://localhost:8080/post_body with a size of 200
+Test POST http://localhost:8080/post_body with a size of 101
+
+Test multiple workers(5) doing multiple times(15): GET on /
+Test multiple workers(20) doing multiple times(5000): GET on /
+Test multiple workers(128) doing multiple times(50): GET on /directory/nop
+Test multiple workers(20) doing multiple times(5): Post on /directory/youpi.bla with size 100000000
+
+********************************************************************************
+GG, So far so good! Run your own tests now! :D
+********************************************************************************
+
+Line of the GIF

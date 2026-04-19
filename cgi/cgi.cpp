@@ -7,14 +7,13 @@ size_t Cgi::CGI_MAX_OUTPUT = 1000000000;
 
 Cgi::Cgi()
 {
-    sent = 0;
-    safeExit = true;
-    writeEnd = false;
-    needsInput = false;
-    closedAll = false;
+    sent        = 0;
+    safeExit    = true;
+    writeEnd    = false;
+    closedAll   = false;
     sigTermSent = false;
-    envp = NULL;
-    argv = NULL;
+    envp        = NULL;
+    argv        = NULL;
 }
 
 Cgi::Cgi(const Cgi &other)
@@ -42,27 +41,26 @@ Cgi &Cgi::operator=(const Cgi &other)
 {
     if (this != &other)
     {
-        interpreter = other.interpreter;
-        extension = other.extension;
-        envp = deepCopy(other.envp);
-        argv = deepCopy(other.argv);
-        pipeIn[0] = other.pipeIn[0];
-        pipeIn[1] = other.pipeIn[1];
-        pipeOut[0] = other.pipeOut[0];
-        pipeOut[1] = other.pipeOut[1];
-        response = other.response;
-        state = other.state;
-        pid = other.pid;
-        status = other.status;
-        start.tv_sec = other.start.tv_sec;
-        start.tv_usec = other.start.tv_usec;
-        current.tv_sec = other.current.tv_sec;
+        interpreter     = other.interpreter;
+        extension       = other.extension;
+        envp            = deepCopy(other.envp);
+        argv            = deepCopy(other.argv);
+        pipeIn[0]       = other.pipeIn[0];
+        pipeIn[1]       = other.pipeIn[1];
+        pipeOut[0]      = other.pipeOut[0];
+        pipeOut[1]      = other.pipeOut[1];
+        response        = other.response;
+        state           = other.state;
+        pid             = other.pid;
+        status          = other.status;
+        start.tv_sec    = other.start.tv_sec;
+        start.tv_usec   = other.start.tv_usec;
+        current.tv_sec  = other.current.tv_sec;
         current.tv_usec = other.current.tv_usec;
-        sent = other.sent;
-        writeEnd = other.writeEnd;
-        needsInput = other.needsInput;
-        safeExit = other.safeExit;
-        closedAll = other.closedAll;
+        sent            = other.sent;
+        writeEnd        = other.writeEnd;
+        safeExit        = other.safeExit;
+        closedAll       = other.closedAll;
     }
     return *this;
 }
@@ -123,6 +121,7 @@ void Cgi::checkForCgi(Client &client)
     scriptPath = resolve_request_filesystem_path(client);
     client.res.set_path(scriptPath);
     size_t dot = scriptPath.rfind('.');
+
     if (dot == std::string::npos)
     {
         state = CGI_NOT_REQUIRED;
@@ -137,8 +136,8 @@ void Cgi::checkForCgi(Client &client)
         if (exten == it->first)
         {
             interpreter = it->second;
-            extension = it->first;
-            state = SETUP_CGI;
+            extension   = it->first;
+            state       = SETUP_CGI;
             return;
         }
     }
@@ -154,7 +153,8 @@ void collectEnv(Client &client, std::vector<std::string> &env)
     env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     env.push_back("SERVER_SOFTWARE=Webserve");
     env.push_back(
-        "REQUEST_URI=" + client.req.getPath() + client.req.getQuery());
+        "REQUEST_URI=" + client.req.getPath() + client.req.getQuery()
+    );
     env.push_back("SERVER_NAME="); // hostname needed later
     env.push_back("SERVER_PORT=" + to_string(client.port));
     env.push_back("REDIRECT_STATUS=200");
@@ -170,7 +170,7 @@ void collectEnv(Client &client, std::vector<std::string> &env)
 
     env.push_back("PATH_INFO=" + client.req.getPath());
 
-    std::map<std::string, std::string> headers = client.req.getHeaders();
+    std::map<std::string, std::string> headers      = client.req.getHeaders();
     std::map<std::string, std::string>::iterator it = headers.begin();
 
     for (; it != headers.end(); it++)
@@ -186,10 +186,10 @@ void collectEnv(Client &client, std::vector<std::string> &env)
 void Cgi::buildEnv(Client &client)
 {
     std::vector<std::string> env;
-    size_t  i;
+    size_t                   i;
 
     collectEnv(client, env);
-    i = env.size();
+    i    = env.size();
     envp = new char *[i + 1];
 
     for (size_t j = 0; j < i; j++)
@@ -210,12 +210,11 @@ void Cgi::setupCgi(Client &client)
 {
     sent = 0;
     response.clear();
-    safeExit = true;
-    writeEnd = false;
-    closedAll = false;
+    safeExit    = true;
+    writeEnd    = false;
+    closedAll   = false;
     sigTermSent = false;
 
-    needsInput = (client.req.getMethod() == "POST" && !client.req.getBody().empty());
     buildEnv(client);
     buildArg();
     state = CREAT_PIPES;
@@ -243,7 +242,7 @@ void Cgi::createPipes()
     state = EXECUTING;
 }
 
-void Cgi::execution()
+void Cgi::execution(Client &client)
 {
     pid_t tmpid = fork();
     if (tmpid == -1)
@@ -258,8 +257,12 @@ void Cgi::execution()
     {
         pid = tmpid;
         this->parentProcess();
-        state = CGI_READY; // this state mean the cgi is ready to pass fds for
-                           // epoll event
+        state = CGI_READY;
+        if (!client.parse.body)
+        {
+            writeEnd = true;
+            close(pipeIn[1]);
+        }
     }
 }
 
@@ -297,29 +300,7 @@ void Cgi::parentProcess()
 {
     close(pipeIn[0]);
     close(pipeOut[1]);
-
-    if (!needsInput)
-    {
-        close(pipeIn[1]);
-        writeEnd = true;
-    }
-
     gettimeofday(&start, NULL);
-}
-
-void Cgi::closeEverything(int epoll_fd, Client &client)
-{
-    if (!closedAll)
-    {
-        if (client.parse.body && !writeEnd)
-        {
-            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeIn[1], NULL);
-            close(pipeIn[1]);
-        }
-        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeOut[0], NULL);
-        close(pipeOut[0]);
-        closedAll = true;
-    }
 }
 
 void Cgi::writing(int epoll_fd, unsigned int events, Client &client)
@@ -359,15 +340,12 @@ void Cgi::writing(int epoll_fd, unsigned int events, Client &client)
     }
 
     if (written == -1)
-    {
-        // closeEverything(epoll_fd, client);
         state = ERROR;
-    }
 }
 
-void Cgi::reading(int epoll_fd, unsigned int events, Client &client)
+void Cgi::reading(unsigned int events)
 {
-    checkResponseAndTime(epoll_fd, client);
+    checkResponseAndTime();
 
     if (!(events & EPOLLIN) && !(events & EPOLLHUP))
         return;
@@ -379,13 +357,15 @@ void Cgi::reading(int epoll_fd, unsigned int events, Client &client)
     if (n > 0)
         response.append(buff, n);
     else if (n == 0 || (events & EPOLLHUP))
+    {
         state = CGI_WAITING;
+    }
+    else if (n == -1)
+        state = ERROR;
 }
 
-void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
+void Cgi::checkResponseAndTime()
 {
-    (void)client;
-    (void)epoll_fd;
     pid_t wait = waitpid(pid, &status, WNOHANG);
     if ((wait == pid || wait == -1) && sigTermSent)
     {
@@ -394,10 +374,7 @@ void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
     }
     gettimeofday(&current, NULL);
     if ((wait == pid || wait == -1) && state == CGI_WAITING && safeExit)
-    {
         state = CGI_DONE;
-        std::cout << "STATE IS --->" << state << "AND CGI DONE AND EXITED !" << std::endl;
-    }
     else
     {
         if (current.tv_sec - start.tv_sec > CGI_TIMEOUT)
@@ -407,7 +384,7 @@ void Cgi::checkResponseAndTime(int epoll_fd, Client &client)
                 safeExit = false;
                 kill(pid, SIGTERM);
                 sigTermSent = true;
-                wait = waitpid(pid, &status, WNOHANG);
+                wait        = waitpid(pid, &status, WNOHANG);
                 if (wait == pid)
                     state = ERROR;
             }
@@ -434,7 +411,7 @@ void Cgi::handleCGI(Client &client)
     if (this->state == CREAT_PIPES)
         this->createPipes();
     if (this->state == EXECUTING)
-        this->execution();
+        this->execution(client);
 }
 
 int Cgi::getPipeOutFd() const

@@ -46,15 +46,12 @@ std::string validate_upload_path(Client &current_client)
 
 void    response_builder::handle_post()
 {
+    // std::cout << "handle_post interrrrrrrrrrrrrrrrrrr" << std::endl;
     std::string file_name = validate_upload_path(*this->current_client);
     if (file_name.empty()) {
         generate_error_page();
         return ;
     }
-
-    // rm-me
-    std::cout << "[>] extracting_file_name -> " << file_name << std::endl;
-    std::cout << "[>] file FD -> " << this->current_client->res.get_static_file_fd() << std::endl;
 
     // >>>>>>>>>>>>>>>>>>>>>>>>> Body Processing >>>>>>>>>>>>>>>>>>>>>>>>>
     
