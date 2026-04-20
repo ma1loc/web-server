@@ -74,19 +74,15 @@ void    response_builder::serving_static_file()
     this->response_holder = header_buff;
 }
 
-// TODO: add the cookie
 void response_builder::build_response()
 {
-    // std::cout << "build_response interrrr" << std::endl;
-    // std::cout << "first: " << this->current_client->res.get_stat_code() << std::endl;
     if (this->current_client->res.get_stat_code() != OK)
         generate_error_page();
     else
     {
-        resolve_request_path();  // TOKNOW: auto-index gen
-        // std::cout << "second: " << this->current_client->res.get_stat_code() << std::endl;
+        resolve_request_path();  // >> auto-index gen
         int stat = this->current_client->res.get_stat_code();
-        if (stat >= 300 && stat < 400)
+        if (stat >= 300 && stat < 400)  // TODO: check if it's redirection or not
             ;
         else if (stat != OK)
             generate_error_page();  // DONE [-] working on it

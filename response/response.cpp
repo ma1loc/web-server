@@ -156,3 +156,7 @@ void    response::handle_session(SessionManager &session_manager, Client &client
     else
         std::cout << RED << "[+] Existing session accessed with ID: " << cookie.id << RSET << std::endl;
 }
+
+void   response::set_is_cookie_false() {
+    this->is_cooke_set = false;
+}
