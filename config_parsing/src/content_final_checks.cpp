@@ -51,8 +51,8 @@ void checking_values(ServerBlock& Serv)
 
     if (!Serv.listen)
         error_line(": missing value (port)", -1);
-    else if (!Serv.set_timeout || Serv.set_timeout < 0)
-        error_line(": set_timeout value is wrong", -1);
+    else if (!Serv.set_timeout)
+        Serv.set_timeout = 10;
     else if (Serv.listen < PORT_MIN_VAL || Serv.listen > PORT_MAX_VAL)
         error_line(": port has incorrect value must be between 1024 and 65535", -1);
     else if (Serv.client_max_body_size < 0 || !Serv.client_max_body_size)
