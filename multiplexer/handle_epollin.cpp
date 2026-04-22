@@ -8,11 +8,8 @@
 
 void    socket_engine::handle_epollin(ssize_t fd)
 {
-    char raw_data[BUFFER_SIZE];
-    // Create a reference to avoid typing the long map access 5 times
-    Client &client = this->raw_client_data[fd];
-
-
+    Client  &client = this->raw_client_data[fd];
+    char    raw_data[BUFFER_SIZE];
     std::memset(raw_data, 0, sizeof(raw_data));
 
     int recv_stat = recv(fd, raw_data, BUFFER_SIZE, 0);
@@ -21,38 +18,30 @@ void    socket_engine::handle_epollin(ssize_t fd)
         client.last_activity = time(0);
         std::string raw_data_buff(raw_data, recv_stat);
 
-        // rm-me
-        {
-            // ------------------------------------------------------------------
-            // rm-me -> debug to see the raw request data received from the client
-            // std::cout << RED << raw_data_buff;
-            // ------------------------------------------------------------------
-        }
-
         int req_stat = parseRequest(client, raw_data_buff);
         if (req_stat == REQ_NOT_READY)
             return ;
 
-        show_request_logs(client, fd);   // Logs
+        // // rm-me
+        // // ------------------ TESTING PURPOSES ----------------- //
+        // std::cout << ">>> Request\n" << raw_data_buff << std::endl;
+        // // ----------------------------------------------------- //
 
-        // cookie and session management
-        client.res.handle_session(session_manager, client);
-
-        client.res.set_stat_code(req_stat);
+        show_request_logs(client, fd);   // >> Just-Logs
+        client.res.handle_session(session_manager, client);  // >> handle cookie and session management in the response class
+        client.res.set_stat_code(req_stat); // >> set the status code based on the parsing result
         if (client.res.get_stat_code() == OK)
         {
             client.cgiHandler.handleCGI(this->raw_client_data[fd]);
-            if (client.cgiHandler.state == CGI_READY) {
+            cgiState cgi_stat = client.cgiHandler.state;
+            if (cgi_stat == CGI_READY) {
                 setup_cgi_pipes(fd);
                 return ;
             }
         }
-        
-        // Only skip if CGI is actively in progress (past the initial CHECKING state)
-        cgiState cgi_stat = this->raw_client_data[fd].cgiHandler.state;
-        if (cgi_stat != CGI_NOT_REQUIRED && cgi_stat != CHECKING)
-            return ;    // CGI is handling this request
 
+        // >>> build the response based on the request and the status code
+        std::cout << YELLOW << "[+ handle_epollin] Building response for client fd " << fd << " with status code " << client.res.get_stat_code() << RSET << std::endl;
         response_builder response_builder;
         response_builder.init_response_builder(client);
         response_builder.build_response();

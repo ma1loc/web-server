@@ -83,8 +83,8 @@ class response  // DONE[]
         const               std::vector<std::string> &get_cookie_holder() const;
         bool                get_is_cookie_set() const;
 
-        // const std::vector<std::string>& get_set_cookie_headers() const;
-        // void                set_is_cookie_false();
+        const std::vector<std::string>& get_set_cookie_headers() const;
+        void                set_is_cookie_false();
 
 };
 
