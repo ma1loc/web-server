@@ -65,7 +65,7 @@ void handle_location_block_root(std::deque<Token>& tokenContainer, LocationBlock
 void handle_redirections(std::deque<Token>& tokenContainer, LocationBlock& loc, int countARG, ssize_t& i,
     std::string& keyword)
 {
-    countARG = 0;
+    (void)countARG;
     std::string value;
     std::set<int> errorsnum;
     int errornum = 0;
@@ -124,7 +124,7 @@ void handle_cgi(std::deque<Token>& tokenContainer, LocationBlock& loc, int count
     std::string& keyword)
 {
     (void)keyword;
-    countARG = 0;
+    (void)countARG;
     std::string key;
     std::string value;
 
