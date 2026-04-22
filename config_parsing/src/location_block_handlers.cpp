@@ -9,8 +9,8 @@ void handle_client_mbs(std::deque<Token>& tokenContainer, LocationBlock& loc, in
     {
         std::stringstream ss(tokenContainer[i].value);
         ss >> loc.client_max_body_size;
-        if(ss.fail() || !ss.eof())
-            error_line(": client_max_body_size must be a number", tokenContainer[i].line);
+        if(ss.fail() || !ss.eof() || loc.client_max_body_size < 0)
+            error_line(": client_max_body_size must be a valid number", tokenContainer[i].line);
         countARG = 0;
     }else
         error_line(": client_max_body_size must have one argument", tokenContainer[i].line);
