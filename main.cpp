@@ -1,7 +1,9 @@
 # include "./socket_engine.hpp"
 # include "./config_parsing/includes/ConfigPars.hpp"
+# include "./cookies_sessions/SessionManager.hpp"
 # include "./utils/utils.hpp"
 # include <csignal>
+#include <sys/time.h>
 
 socket_engine s_engine;
 
@@ -17,7 +19,10 @@ int main(int ac, char **av)
     std::signal(SIGINT, signal_handler);
     std::deque<ServerBlock> ServerConfig;
     std::string fileName;
+    timeval t1;
 
+    gettimeofday(&t1, NULL);
+    std::srand(t1.tv_sec * 1000 + t1.tv_usec / 1000); // Seed the random number generator with current time in milliseconds
     if (ac < 2)
         fileName = "./config.conf";
     else
@@ -48,15 +53,7 @@ int main(int ac, char **av)
         s_engine.set_server_config_info(ServerConfig);
         
         // ----------------- SERVER LOGS ----------------- //
-        for (size_t i = 0; i < ServerConfig.size(); i++)
-        {
-            std::string host = ServerConfig[i].host;
-            std::string port = to_string(ServerConfig[i].listen);
-            std::cout << GREEN << "Serving HTTP on " << host << " port " << port
-                << " (http://" << host << ":" << port << "/)"
-                << RSET << std::endl;
-            s_engine.init_server_side(port, host);
-        }
+        setup_server_config_info(ServerConfig);  // S_Logs
         s_engine.process_connections();
     }
     catch(const std::exception& e)

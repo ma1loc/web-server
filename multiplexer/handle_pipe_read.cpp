@@ -9,32 +9,12 @@ void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
     Client &client = raw_client_data[client_fd];
     client.last_activity = time(0);
 
-
-    /*  TODO - TO-KNOW:
-        handling pipe-read with your if statment is not correct
-        becouse once you read you change stat to CGI_WAITING
-        that mean's your not reading again ever
-
-        CGI_READY -> child running -> pipe events active
-        by calling the handle_pipe_read() -> calling cgi.reading()
-        reading():
-            if bytes > 0:
-                append output
-            if EOF/HUP:
-                set CGI_WAITING -> stdout done, child may still exit
-    */
-    // if i include this block
-    if (client.cgiHandler.state == CGI_READY) {
-        // std::cout << "readinggggggggggggggggggggg" << std::endl;
-        client.cgiHandler.reading(epoll_fd, events);
-    }
-    
-    // i will remove this line
-    // client.cgiHandler.reading(epoll_fd, events, client);
-    // std::cout << "readinggggggggggggggggggggg" << std::endl;
+    if (client.cgiHandler.state == CGI_READY)
+        client.cgiHandler.reading(events);
 
     if (client.cgiHandler.state == CGI_DONE || client.cgiHandler.state == ERROR)
     {
+        // std::cout << "CGI DONE OR ERROR" << std::endl;
         int del_ret = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipe_fd, NULL);
         if (del_ret == -1)
             std::cerr << "[!] epoll_ctl DEL failed: " << strerror(errno) << std::endl;
@@ -51,7 +31,6 @@ void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
         }
         else
         {
-            // std::string cgi_output = client.cgiHandler.getCgiResponse();
             std::string &cgi_output = client.cgiHandler.getCgiResponse();
 
             std::string cgi_headers;
