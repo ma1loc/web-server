@@ -392,7 +392,8 @@ void Cgi::checkResponseAndTime(Client &client)
     }
     else
     {
-        if (current.tv_sec - start.tv_sec > client.server_conf->set_timeout)
+        if (current.tv_sec - start.tv_sec >
+            (int)client.server_conf->set_timeout)
         {
             if (!sigTermSent)
             {
@@ -407,7 +408,7 @@ void Cgi::checkResponseAndTime(Client &client)
             {
                 gettimeofday(&current, NULL);
                 if ((current.tv_sec - start.tv_sec) >
-                    (client.server_conf->set_timeout + 3))
+                    (int)(client.server_conf->set_timeout + 3))
                 {
                     kill(pid, SIGKILL);
                     waitpid(pid, &status, 0);
