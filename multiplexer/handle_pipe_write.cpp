@@ -7,9 +7,8 @@ void    socket_engine::handle_pipe_write(int pipe_fd, uint32_t events)
     client.last_activity = time(0);
 
     client.cgiHandler.writing(epoll_fd, events, client);
-
     if (client.cgiHandler.state == ERROR || client.cgiHandler.writeEnd)
-    {
+    {   // alrady has ben closed from epoll just have to remove it form my list
         pipe_write_to_client.erase(pipe_fd);
         remove_fd_from_list(pipe_fd);
     }

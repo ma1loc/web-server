@@ -22,14 +22,10 @@ void    socket_engine::handle_epollin(ssize_t fd)
         if (req_stat == REQ_NOT_READY)
             return ;
 
-        // // rm-me
-        // // ------------------ TESTING PURPOSES ----------------- //
-        // std::cout << ">>> Request\n" << raw_data_buff << std::endl;
-        // // ----------------------------------------------------- //
+        show_request_logs(client, fd);   // >> logs
 
-        show_request_logs(client, fd);   // >> Just-Logs
-        client.res.handle_session(session_manager, client);  // >> handle cookie and session management in the response class
-        client.res.set_stat_code(req_stat); // >> set the status code based on the parsing result
+        client.res.handle_session(session_manager, client);
+        client.res.set_stat_code(req_stat);
         if (client.res.get_stat_code() == OK)
         {
             client.cgiHandler.handleCGI(this->raw_client_data[fd]);
@@ -40,8 +36,7 @@ void    socket_engine::handle_epollin(ssize_t fd)
             }
         }
 
-        // >>> build the response based on the request and the status code
-        std::cout << YELLOW << "[+ handle_epollin] Building response for client fd " << fd << " with status code " << client.res.get_stat_code() << RSET << std::endl;
+        // >> serv static file or generate response body
         response_builder response_builder;
         response_builder.init_response_builder(client);
         response_builder.build_response();

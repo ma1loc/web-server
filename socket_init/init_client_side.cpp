@@ -1,11 +1,10 @@
 # include "../socket_engine.hpp"
 
-// (DONE[*])
 void socket_engine::init_client_side(int fd)
 {
+    // >> add new client into map
     inisializeClient(this->raw_client_data[fd]);
     this->raw_client_data[fd].is_serving_file = false;
-    // this->raw_client_data[fd].static_file_fd = -1;
     this->raw_client_data[fd].last_activity = time(0);
     this->raw_client_data[fd].close_connection = false;
 
@@ -13,9 +12,12 @@ void socket_engine::init_client_side(int fd)
 
     std::memset(&ev, 0, sizeof(ev));
     ev.data.fd = fd;
+    
     /*
         EPOLLIN -> Tell me when ready to read data from FD
-        EPOLLRDHUP -> Remote Device Hang Up ()
+        EPOLLRDHUP -> half close
+        EPOLLHUP(full close), EPOLLERR(error happend) even not add it the kernel init that events
+            by defult if it's happend
     */
     ev.events = EPOLLIN | EPOLLRDHUP;
 

@@ -14,6 +14,9 @@ Cgi::Cgi()
     sigTermSent = false;
     envp        = NULL;
     argv        = NULL;
+
+    contentType = false;
+    OutStatus   = false;
 }
 
 Cgi::Cgi(const Cgi &other)
@@ -61,6 +64,8 @@ Cgi &Cgi::operator=(const Cgi &other)
         writeEnd        = other.writeEnd;
         safeExit        = other.safeExit;
         closedAll       = other.closedAll;
+        contentType     = other.contentType;
+        OutStatus       = other.OutStatus;
     }
     return *this;
 }
@@ -291,6 +296,10 @@ void Cgi::childProcess()
     close(pipeOut[0]);
     close(pipeOut[1]);
 
+    int erfd = open("/tmp/webServerLog.txt", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    dup2(erfd, STDERR_FILENO);
+    close(erfd);
+
     execve(argv[0], argv, envp);
     perror("execve failed :");
     exit(1);
@@ -336,16 +345,17 @@ void Cgi::writing(int epoll_fd, unsigned int events, Client &client)
             writeEnd = true;
             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pipeIn[1], NULL);
             close(pipeIn[1]);
+            return;
         }
     }
 
-    if (written == -1)
+    if (written == -1 || written == 0)
         state = ERROR;
 }
 
-void Cgi::reading(unsigned int events)
+void Cgi::reading(unsigned int events, Client &client)
 {
-    checkResponseAndTime();
+    checkResponseAndTime(client);
 
     if (!(events & EPOLLIN) && !(events & EPOLLHUP))
         return;
@@ -364,7 +374,7 @@ void Cgi::reading(unsigned int events)
         state = ERROR;
 }
 
-void Cgi::checkResponseAndTime()
+void Cgi::checkResponseAndTime(Client &client)
 {
     pid_t wait = waitpid(pid, &status, WNOHANG);
     if ((wait == pid || wait == -1) && sigTermSent)
@@ -374,10 +384,16 @@ void Cgi::checkResponseAndTime()
     }
     gettimeofday(&current, NULL);
     if ((wait == pid || wait == -1) && state == CGI_WAITING && safeExit)
-        state = CGI_DONE;
+    {
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+            state = CGI_DONE;
+        else
+            state = ERROR;
+    }
     else
     {
-        if (current.tv_sec - start.tv_sec > CGI_TIMEOUT)
+        if (current.tv_sec - start.tv_sec >
+            (int)client.server_conf->set_timeout)
         {
             if (!sigTermSent)
             {
@@ -391,7 +407,8 @@ void Cgi::checkResponseAndTime()
             else
             {
                 gettimeofday(&current, NULL);
-                if ((current.tv_sec - start.tv_sec) > (CGI_TIMEOUT + 3))
+                if ((current.tv_sec - start.tv_sec) >
+                    (int)(client.server_conf->set_timeout + 3))
                 {
                     kill(pid, SIGKILL);
                     waitpid(pid, &status, 0);
