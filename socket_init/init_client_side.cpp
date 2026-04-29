@@ -9,13 +9,13 @@ void socket_engine::init_client_side(int fd)
     this->raw_client_data[fd].close_connection = false;
 
     struct epoll_event ev;
-
     std::memset(&ev, 0, sizeof(ev));
+    
     ev.data.fd = fd;
     
     /*
         EPOLLIN -> Tell me when ready to read data from FD
-        EPOLLRDHUP -> half close
+        EPOLLRDHUP -> half close (FIN)
         EPOLLHUP(full close), EPOLLERR(error happend) even not add it the kernel init that events
             by defult if it's happend
     */

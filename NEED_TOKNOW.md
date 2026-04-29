@@ -16,3 +16,35 @@
 
 
 504 status code (gateway timeout)
+
+---------------------------------------------
+- EPOLLRDHUP && EPOLLHUP
+    if (events & (EPOLLHUP | EPOLLERR)) {   // RST -> close after (T-W H)
+        terminate_client(fd, "[-] RST: network connection dropped/Error ");
+        return ;
+    }
+    WHY ????
+        if (events & EPOLLRDHUP) {    // 'FIN'
+        if (!(events & EPOLLIN)) {    // 'FIN' & 'no data'
+            terminate_client(fd, "[-] Client closed connection");
+            return ;
+        }
+    }
+
+- recv return
+    else if (recv_stat == 0)
+        terminate_client(fd, "[!] Client lost connection (EOF)");
+    else
+        terminate_client(fd, "[!] Client connection broke");
+
+- class response_builder
+
+- level trigerd
+    edge trigerd
+
+- why using the O_NONBLOCK in the case of the pipes && and sockets not:
+    >> first thing first sockets is based of TCP Flow
+    TCP stack handles the flow control, it slows down the transfer
+
+    >> pipes has a limited buffer size to hold unreaded data around 64kb
+---------------------------------------------

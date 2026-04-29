@@ -22,7 +22,7 @@ void socket_engine::process_connections(void)
             int fd = events_holder[i].data.fd;
             // >>> new event record
             if (is_server(server_side_fds, fd))
-                server_event(fd);
+                server_event(fd);   // DONE[*]
             // >>> ready to read from CGI
             else if (pipe_to_client.count(fd))
                 handle_pipe_read(fd, events_holder[i].events);

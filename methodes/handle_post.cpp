@@ -11,27 +11,20 @@ std::string extracting_file_name(const std::map<std::string, std::string> &heade
         content_type = extracting_from_header(header, "CONTENT_TYPE");
         if (content_type.empty())   // >> No Content-type
             file_name += DEFAULT_EXTENSION;
-        else                        // There's Content-type
+        else                        // >> There's Content-type
             file_name += media_type_to_extension(content_type);
     }
     return (file_name);
 }
 
-std::string validate_upload_path(Client &current_client)    // TODO: check
+std::string validate_upload_path(Client &current_client)
 {
     // >> it can have a body without filename (file_name)
     std::string file_name = extracting_file_name(current_client.req.getHeaders());
 
-    // ---------------------------------------------------------------------------------------
     // >> (request path + location path)
-    std::cout << ">>> Request path -> " << current_client.req.getPath() << std::endl;
-    std::cout << ">>> Location path -> " << current_client.location_conf->path << std::endl;
-    
     std::string req_path = path_remainder(current_client.req.getPath(),
         current_client.location_conf->path);
-
-    std::cout << ">>> Relative path -> " << req_path << std::endl;
-    // ---------------------------------------------------------------------------------------
 
     std::string file_path = join_root_path(current_client.location_conf->root, req_path);
     std::cout << ">>> File path -> " << file_path << std::endl;
@@ -106,5 +99,4 @@ void    response_builder::handle_post()
         this->current_client->res.set_stat_code(CREATED);
 
     setup_body_header(this->current_client, this->response_holder, 0);
-
 }

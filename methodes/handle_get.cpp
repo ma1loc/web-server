@@ -13,7 +13,7 @@ void response_builder::set_header(void)
     else
         response_holder.append("Content-Type: " + extension_to_media_type(this->path) + "\r\n");
 
-    if (current_client->res.get_is_cookie_set())    // >> cookie set in the response header
+    if (current_client->res.get_is_cookie_set())
     {
         std::cout << YELLOW << "[+ set_header] Setting cookies in response headers:" << RSET << std::endl;
         const std::vector<std::string> &set_cookie_headers = current_client->res.get_cookie_holder();
@@ -43,7 +43,6 @@ void response_builder::generate_error_page()
     if (this->current_client->server_conf)
         this->path = get_stat_code_path(status_code);
 
-    // std::cout << "DELETE PATH -> " << this->path << std::endl;
     if (is_valid_error_path(this->path))
         serving_static_file();
     else{
@@ -52,10 +51,8 @@ void response_builder::generate_error_page()
     }
 }
 
-// TODO: check
 void response_builder::handle_get()
 {
     set_header();
     set_body();
-    std::cout << "Response holder -> " << this->response_holder << std::endl;
 }

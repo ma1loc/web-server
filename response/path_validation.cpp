@@ -1,5 +1,5 @@
 # include "../response_builder.hpp"
-# include "../socket_engine.hpp"    // used just to indelucde the client struct //  rm-me
+// # include "../socket_engine.hpp"    // used just to indelucde the client struct //  rm-me
 # include "../utils/utils.hpp"
 
 bool    is_dir_exist(const std::string &path)
@@ -36,13 +36,13 @@ std::string join_root_path(const std::string root, std::string path)
     return (final_url);
 }
 
+// TODO: check
 std::string path_remainder(const std::string &request_path, const std::string &location_path)
 {
     std::string path_after_location = request_path;
     int req_size = request_path.size();
     int loc_size = location_path.size();
 
-    // TODO: check
     if (req_size >= loc_size
         && path_after_location.substr(0, location_path.size()) == location_path)
             path_after_location = path_after_location.substr(location_path.size());
@@ -64,12 +64,14 @@ std::string resolve_request_filesystem_path(const Client &client)
     return (join_root_path(client.location_conf->root, req_path));
 }
 
+// TODO: check
 void    response_builder::return_handling()
 {
     std::map<int, std::string>::const_iterator it = 
         current_client->location_conf->redirection.begin();
     
-    // 3** enforcement later 
+    // 3** enforcement later
+    // cookie in that response???
     this->current_client->res.set_stat_code(it->first);
     response_holder.clear();
     response_holder.append(current_client->res.get_start_line());

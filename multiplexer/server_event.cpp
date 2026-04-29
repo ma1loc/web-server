@@ -1,6 +1,5 @@
 # include "../socket_engine.hpp"
 
-// >> logs
 void    new_connection_logs(sockaddr_in &client_addr, int &client_fd)
 {
     char    *client_ip = inet_ntoa(client_addr.sin_addr);
@@ -23,7 +22,6 @@ void socket_engine::server_event(ssize_t fd)
         return;
     }
 
-    // >> logs
-    new_connection_logs(client_addr, client_fd);
+    new_connection_logs(client_addr, client_fd);    // >> logs
     init_client_side(client_fd);
 }

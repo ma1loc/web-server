@@ -2,6 +2,21 @@
 # include "../response_builder.hpp"
 # include "../utils/utils.hpp"
 
+void    header_setup(Client &client, std::string &response, size_t body_size)
+{
+    response.append("Server: Webserv\r\n");
+    response.append("Date: " + get_time() + "\r\n");
+    response.append("Content-Length: " + to_string(body_size) + "\r\n");
+    if (client.res.get_is_cookie_set())
+    {
+        const std::vector<std::string> &set_cookie_headers = client.res.get_cookie_holder();
+        for (size_t i = 0; i < set_cookie_headers.size(); ++i) {
+            response.append("Set-Cookie: " + set_cookie_headers[i] + "\r\n");
+        }
+    }
+    response.append("Connection: close\r\n\r\n");
+}
+
 void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
 {
     int client_fd = pipe_to_client[pipe_fd];
@@ -34,11 +49,9 @@ void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
                 client.res.set_stat_code(OK);
 
                 std::string response = client.res.get_start_line();
-                response.append("Server: Webserv\r\n");
-                response.append("Date: " + get_time() + "\r\n");
-                response.append("Content-Length: " + to_string(cgi_output.length()) + "\r\n");
-                response.append("Connection: close\r\n\r\n");
+                header_setup(client, response, cgi_output.length());
                 response.append(cgi_output);    // >> body
+
                 client.res.set_raw_response(response);
             }
             else if (stat == INTERNAL_SERVER_ERROR)
