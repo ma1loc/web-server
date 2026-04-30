@@ -24,6 +24,21 @@
             --sans:      'Syne', sans-serif;
         }
 
+        body[data-theme="light"] {
+            --bg:        #f4f7fb;
+            --surface:   #ffffff;
+            --border:    #d8e0ea;
+            --border-hi: #b7c4d1;
+            --text:      #101826;
+            --muted:     #5d6b7b;
+            --accent:    #2563eb;
+            --accent-dim:#dbeafe;
+            --danger:    #d14d72;
+            --danger-dim:#ffe4ec;
+            --success:   #059669;
+            --warning:   #b45309;
+        }
+
         body {
             background: var(--bg);
             color: var(--text);
@@ -44,6 +59,10 @@
             background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%);
             pointer-events: none;
             z-index: 0;
+        }
+
+        body[data-theme="light"]::before {
+            background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
         }
 
         .wrapper {
@@ -192,6 +211,60 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
+        }
+
+        .theme-box {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .theme-swatch {
+            flex: 1 1 160px;
+            border-radius: 2px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.12s, border-color 0.2s, opacity 0.2s;
+            color: #fff;
+            min-height: 92px;
+        }
+
+        .theme-swatch:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent);
+        }
+
+        .theme-swatch-dark {
+            background: linear-gradient(135deg, #0a0c10, #111418);
+        }
+
+        .theme-swatch-light {
+            background: linear-gradient(135deg, #f5f7fa, #dde4ec);
+            color: #101826;
+        }
+
+        .theme-swatch-title {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .theme-swatch-desc {
+            font-size: 0.82rem;
+            line-height: 1.5;
+            opacity: 0.9;
         }
 
         .counter-label {
@@ -392,11 +465,53 @@
         <div class="status-message" id="counterStatus"></div>
     </div>
 
+    <!-- Theme Preference Test -->
+    <div class="card card-warning">
+        <div class="card-header">
+            <span class="method-badge badge-session">COOKIE</span>
+            <span class="card-title">Theme Preference Test</span>
+            <span class="card-num">02</span>
+        </div>
+        <p>Click a theme below to store a <code>theme</code> cookie. On the next request, the browser sends that cookie in the request header, and your server can read it in the response builder.</p>
+
+        <div class="theme-box">
+            <div class="counter-label">Current Theme Cookie</div>
+            <div class="counter-value" id="themeValue" style="font-size: 1.4rem;">none</div>
+
+            <div class="theme-preview">
+                <button class="theme-swatch theme-swatch-dark" type="button" onclick="setThemeCookie('dark')">
+                    <div class="theme-swatch-title">Dark</div>
+                    <div class="theme-swatch-desc">Stores <code>theme=dark</code> in the cookie jar.</div>
+                </button>
+                <button class="theme-swatch theme-swatch-light" type="button" onclick="setThemeCookie('light')">
+                    <div class="theme-swatch-title">Light</div>
+                    <div class="theme-swatch-desc">Stores <code>theme=light</code> in the cookie jar.</div>
+                </button>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-secondary" type="button" onclick="clearThemeCookie()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+                </svg>
+                Clear Theme Cookie
+            </button>
+        </div>
+
+        <div class="session-info">
+            After clicking a theme, refresh or press Ping Session and check your server logs. The cookie should appear in the request header as <code>theme=dark</code> or <code>theme=light</code>.
+        </div>
+
+        <div class="status-message" id="themeStatus"></div>
+    </div>
+
 </div>
 
 <!-- Simple Session Counter Script -->
 <script>
     const COUNTER_KEY = 'webserv_counter_v1';
+    const THEME_KEY = 'theme';
 
     function readCounter() {
         const rawValue = localStorage.getItem(COUNTER_KEY);
@@ -409,6 +524,13 @@
     function writeCounter(value) {
         localStorage.setItem(COUNTER_KEY, String(value));
         document.getElementById('visitCount').textContent = String(value);
+    }
+
+    function applyTheme(theme, updateLabel = true) {
+        const nextTheme = (theme === 'light') ? 'light' : 'dark';
+        document.body.dataset.theme = nextTheme;
+        if (updateLabel)
+            document.getElementById('themeValue').textContent = nextTheme;
     }
 
     function showStatus(elementId, message, type = 'info') {
@@ -429,6 +551,34 @@
         showStatus('counterStatus', 'Counter reset to 0.', 'success');
     }
 
+    function getCookieValue(name) {
+        const nameEQ = name + '=';
+        const cookies = document.cookie.split(';');
+
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.indexOf(nameEQ) === 0)
+                return decodeURIComponent(cookie.substring(nameEQ.length));
+        }
+
+        return '';
+    }
+
+    function setThemeCookie(theme) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (7 * 24 * 60 * 60 * 1000));
+        document.cookie = THEME_KEY + '=' + encodeURIComponent(theme) + ';expires=' + expires.toUTCString() + ';path=/';
+        applyTheme(theme);
+        showStatus('themeStatus', 'Theme cookie set to ' + theme + '. The browser will send it on the next request.', 'success');
+    }
+
+    function clearThemeCookie() {
+        document.cookie = THEME_KEY + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+        document.getElementById('themeValue').textContent = 'none';
+        document.body.dataset.theme = 'dark';
+        showStatus('themeStatus', 'Theme cookie cleared.', 'info');
+    }
+
     async function pingSession() {
         try {
             await fetch('/cookies_sessions.html?session_ping=' + Date.now(), {
@@ -446,6 +596,14 @@
     window.addEventListener('load', function() {
         const count = readCounter() + 1;
         writeCounter(count);
+
+        const currentTheme = getCookieValue(THEME_KEY);
+        if (currentTheme)
+            applyTheme(currentTheme, true);
+        else {
+            applyTheme('dark', false);
+            document.getElementById('themeValue').textContent = 'none';
+        }
     });
 </script>
 
