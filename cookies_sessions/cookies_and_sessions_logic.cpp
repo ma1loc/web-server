@@ -1,5 +1,17 @@
 #include "./includes/cookies_and_sessions_logic.hpp"
 
+Session& storing_session_data(SessionManager& sessionM, std::map<std::string,
+    std::string>& data)
+{
+    Session& Ses = sessionM.createSession();
+    for(std::map<std::string, std::string>::iterator it = data.begin();
+        it != data.end(); ++it)
+    {
+        Ses.SetSessionVal(it->first, it->second);
+    }
+    return Ses;
+}
+
 Session& cookies_and_sessions_logic(SessionManager& sessionM, Client& client)
 {
     std::string key;
@@ -18,7 +30,7 @@ Session& cookies_and_sessions_logic(SessionManager& sessionM, Client& client)
         if (!data["sessionId"].empty())
             SessionID = data["sessionId"];
         else
-            return sessionM.createSession();
+            return storing_session_data(sessionM, data);
         if (sessionM.sessionExists(SessionID))
         {
             sessionM.sessionTimeCheck(SessionID);
@@ -29,10 +41,10 @@ Session& cookies_and_sessions_logic(SessionManager& sessionM, Client& client)
                 Ses.last_access = std::time(0);
                 return Ses;
             }else
-                return sessionM.createSession();
+                return storing_session_data(sessionM, data);
         }
         else
-            return sessionM.createSession();
+            return storing_session_data(sessionM, data);
     }else
-        return sessionM.createSession();
+        return storing_session_data(sessionM, data);
 }
