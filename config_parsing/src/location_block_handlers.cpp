@@ -43,7 +43,7 @@ void handle_index(std::deque<Token>& tokenContainer, LocationBlock& loc, int cou
 
     while(tokenContainer[i].value != ";")
     {
-        loc.index.insert(tokenContainer[i].value);
+        loc.index.push_back(tokenContainer[i].value);
         i++;
     }
 }
