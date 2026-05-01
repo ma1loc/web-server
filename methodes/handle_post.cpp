@@ -4,14 +4,14 @@
 std::string extracting_file_name(const std::map<std::string, std::string> &header)
 {
     std::string file_name = extracting_from_header(header, "FILENAME");
-    if (file_name.empty())  // No file_name
+    if (file_name.empty())  // >> No file_name
     {
         std::string content_type;
         file_name = rand_str_gen();
         content_type = extracting_from_header(header, "CONTENT_TYPE");
-        if (content_type.empty())   // No Content-type
+        if (content_type.empty())   // >> No Content-type
             file_name += DEFAULT_EXTENSION;
-        else                        // There's Content-type
+        else                        // >> There's Content-type
             file_name += media_type_to_extension(content_type);
     }
     return (file_name);
@@ -19,11 +19,14 @@ std::string extracting_file_name(const std::map<std::string, std::string> &heade
 
 std::string validate_upload_path(Client &current_client)
 {
+    // >> it can have a body without filename (file_name)
     std::string file_name = extracting_file_name(current_client.req.getHeaders());
-    std::string file_path;
-    std::string req_path = resolve_location_relative_path(current_client.req.getPath(),
-            current_client.location_conf->path);
-    file_path = join_root_path(current_client.location_conf->root, req_path);
+
+    // >> (request path + location path)
+    std::string req_path = path_remainder(current_client.req.getPath(),
+        current_client.location_conf->path);
+
+    std::string file_path = join_root_path(current_client.location_conf->root, req_path);
     if (!is_dir_exist(file_path)) {
         current_client.res.set_stat_code(NOT_FOUND);
         return ("");
@@ -51,13 +54,14 @@ void setup_body_header(Client *current_client, std::string &response_holder, siz
     response_holder.append("Date: " + get_time() + "\r\n");
     response_holder.append("Content-Type: text/html\r\n");
     
-    if (current_client->res.get_is_cookie_set())
+    if (current_client->res.get_is_cookie_set())    // >> cookie set in the response header
     {
         const std::vector<std::string> &cookies = current_client->res.get_cookie_holder();
         for (size_t i = 0; i < cookies.size(); ++i) {
             response_holder.append("Set-Cookie: " + cookies[i] + "\r\n");
         }
     }
+    response_holder.append("Connection: close\r\n");
     response_holder.append("Content-Length: " + to_string(body_len) + "\r\n\r\n");
 }
 
@@ -69,13 +73,9 @@ void    response_builder::handle_post()
         return ;
     }
 
-    // >>>>>>>>>>>>>>>>>>>>>>>>> Body Processing >>>>>>>>>>>>>>>>>>>>>>>>>
-    
-    // is have alrady the body ready to make a response based on it
+    // >> body setup
     const std::string &body_buff = this->current_client->req.getBody();
-    std::cout << "body_buff size -> " << body_buff.length() << std::endl;
-    
-    
+
     if (body_buff.empty()) {    // >> NO body in the request
         this->current_client->res.set_stat_code(OK);
         setup_body_header(this->current_client, this->response_holder, 0);
@@ -97,5 +97,4 @@ void    response_builder::handle_post()
         this->current_client->res.set_stat_code(CREATED);
 
     setup_body_header(this->current_client, this->response_holder, 0);
-
 }

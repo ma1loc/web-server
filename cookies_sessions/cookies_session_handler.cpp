@@ -1,4 +1,4 @@
-#include "cookies_session_handler.hpp"
+#include "./includes/cookies_session_handler.hpp"
 
 std::vector<std::string> split(std::vector<std::string> keywords, char dilimeter)
 {
@@ -38,7 +38,8 @@ std::map<std::string, std::string>  parseCookies(std::string header)
 
     while(i + 1 < splited_by_equal_sign.size())
     {
-        cookie.SetSessionVal(splited_by_equal_sign[i], splited_by_equal_sign[i + 1]);
+        if (!splited_by_equal_sign[i].empty() && !splited_by_equal_sign[i + 1].empty())
+            cookie.SetSessionVal(splited_by_equal_sign[i], splited_by_equal_sign[i + 1]);
         i += 2;
     }
     return cookie.GetData();
