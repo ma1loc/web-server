@@ -211,6 +211,7 @@ bool    validate_headers(Client &current_client)
     current_client.server_conf = NULL;
     current_client.location_conf = NULL;
 
+    // >> No server blcok match
     if (it == header.end()) {
         current_client.res.set_stat_code(BAD_REQUEST);
         return (false);
@@ -220,19 +221,18 @@ bool    validate_headers(Client &current_client)
     if (index != std::string::npos)
     {
         std::string host = it->second.substr(0, index);
-        std::string port = it->second.substr((index + 1));
+        std::string port = it->second.substr((index + 1));  // skip ':'
 
-        current_client.host = address_resolution(host);
+        current_client.host = address_resolution(host); // >> host pars
         if (current_client.host == INADDR_NONE)  // >> invalid host
             current_client.host = 0;
 
-        current_client.port = valid_port_number(port);
+        current_client.port = valid_port_number(port); // >> port parse
         if (!current_client.port)    // >> invalid port
             current_client.port = 0;
 
         if (current_client.port != 0 && current_client.host != 0)
         {
-            current_client.host_str_format = host;
             current_client.config_file_info.setServerForRequest(current_client.host,
                 current_client.port, s_engine.get_server_config_info());
             current_client.server_conf = current_client.config_file_info.getServer();

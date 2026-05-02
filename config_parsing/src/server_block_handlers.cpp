@@ -104,7 +104,7 @@ bool& insideLoc)
     {
         while(i < (ssize_t)tokenContainer.size() && tokenContainer[i].value != ";")
         {
-            Serv.index.insert(tokenContainer[i].value);
+            Serv.index.push_back(tokenContainer[i].value);
             i++;
         }
     }

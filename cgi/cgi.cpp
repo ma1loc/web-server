@@ -357,7 +357,7 @@ void Cgi::reading(unsigned int events, Client &client)
 {
     checkResponseAndTime(client);
 
-    if (!(events & EPOLLIN) && !(events & EPOLLHUP))    // why????
+    if (!(events & EPOLLIN) && !(events & EPOLLHUP))
         return;
 
     char buff[WRITE_READ_LIMIT];

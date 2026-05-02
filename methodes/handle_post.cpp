@@ -27,8 +27,6 @@ std::string validate_upload_path(Client &current_client)
         current_client.location_conf->path);
 
     std::string file_path = join_root_path(current_client.location_conf->root, req_path);
-    std::cout << ">>> File path -> " << file_path << std::endl;
-
     if (!is_dir_exist(file_path)) {
         current_client.res.set_stat_code(NOT_FOUND);
         return ("");
@@ -56,7 +54,7 @@ void setup_body_header(Client *current_client, std::string &response_holder, siz
     response_holder.append("Date: " + get_time() + "\r\n");
     response_holder.append("Content-Type: text/html\r\n");
     
-    if (current_client->res.get_is_cookie_set())
+    if (current_client->res.get_is_cookie_set())    // >> cookie set in the response header
     {
         const std::vector<std::string> &cookies = current_client->res.get_cookie_holder();
         for (size_t i = 0; i < cookies.size(); ++i) {

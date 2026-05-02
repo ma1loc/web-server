@@ -41,7 +41,9 @@ void    socket_engine::handle_pipe_read(int pipe_fd, uint32_t events)
             response_builder rb;
             rb.init_response_builder(client);
             rb.build_response();
-        } else {
+        }
+        else
+        {
             std::string &cgi_output = client.cgiHandler.getCgiResponse();
             int stat = client.cgiHandler.parseOutput(cgi_output);
             if (stat == OUTPUT_READY)

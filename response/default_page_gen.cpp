@@ -40,7 +40,7 @@ void    response_builder::default_error_page(unsigned short int stat_code)
 {
     const std::string status_code = to_string(stat_code);
     const std::string str_of_stat_code = stat_code_to_string(stat_code);
-    const std::string title = "Webserv: " + status_code + str_of_stat_code;
+    const std::string title = "Webserv: " + status_code + " " + str_of_stat_code;
     const std::string style = get_error_page_style();
 
     this->body_buff = "<!DOCTYPE html>\n"

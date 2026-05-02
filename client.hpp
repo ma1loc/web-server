@@ -24,7 +24,6 @@ struct Client
 {
     unsigned short int  port;
     unsigned int        host;
-    std::string         host_str_format;
 
     ServerBlockLookup       config_file_info;
     const ServerBlock       *server_conf;
