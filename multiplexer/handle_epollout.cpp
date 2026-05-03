@@ -1,12 +1,12 @@
 # include "../socket_engine.hpp"
 # include "../utils/utils.hpp"
 
-// TODO: check
 void    socket_engine::handle_epollout(ssize_t fd)
 {
     if (raw_client_data[fd].is_serving_file) // >> static file
     {
-        if (raw_client_data[fd].res.stream_response_to_client(fd)) {
+        if (raw_client_data[fd].res.stream_response_to_client(fd))
+        {
             raw_client_data[fd].close_connection = true;
             show_response_logs(raw_client_data[fd], fd);
         }

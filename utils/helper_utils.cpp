@@ -233,7 +233,6 @@ bool    validate_headers(Client &current_client)
 
         if (current_client.port != 0 && current_client.host != 0)
         {
-            current_client.host_str_format = host;
             current_client.config_file_info.setServerForRequest(current_client.host,
                 current_client.port, s_engine.get_server_config_info());
             current_client.server_conf = current_client.config_file_info.getServer();

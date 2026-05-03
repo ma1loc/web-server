@@ -35,7 +35,6 @@ std::string join_root_path(const std::string root, std::string path)
     return (final_url);
 }
 
-// TODO: check
 std::string path_remainder(const std::string &request_path, const std::string &location_path)
 {
     std::string path_after_location = request_path;

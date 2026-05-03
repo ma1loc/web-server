@@ -9,7 +9,7 @@ response::response() {
     this->is_body_ready = false;
     this->path = "";
 
-    this->static_file_fd = 0;
+    this->static_file_fd = -1;
     this->file_size = 0;
     this->bytes_sent = 0;
     this->is_cooke_set = false;
@@ -78,26 +78,29 @@ off_t response::get_bytes_sent(void) const {
     return (this->bytes_sent);
 }
 
-// TODO: check
-bool    response::stream_response_to_client(int fd)
+bool    response::stream_response_to_client(int client_fd)
 {
     // >> serving static file header first
     if (this->bytes_sent < (off_t)final_raw_response.size())
     {
-        ssize_t bytes_actually_sent = send(fd, final_raw_response.c_str() + this->bytes_sent,
+        ssize_t bytes_actually_sent = send(client_fd, final_raw_response.c_str() + this->bytes_sent,
             this->final_raw_response.size() - this->bytes_sent, MSG_NOSIGNAL);
         if (bytes_actually_sent == -1)
+        {
+            close(static_file_fd);
+            static_file_fd = -1;
             return (false);
+        }
 
         this->save_bytes_sent(this->bytes_sent + bytes_actually_sent);
     }
     else    // serving the body after the header send
     {
         off_t file_offset = this->bytes_sent - final_raw_response.size();
-        
-        // TODO: check
+
         if (lseek(static_file_fd, file_offset, SEEK_SET) == (off_t)-1) {
             close(static_file_fd);
+            static_file_fd = -1;
             return (true);
         }
 
@@ -106,22 +109,26 @@ bool    response::stream_response_to_client(int fd)
         if (readed > 0)
         {
             // MSG_NOSIGNAL -> to prevent SIGPIPE signal when the client has closed the connection
-            ssize_t bytes_actually_sent = send(fd, file_buffer, readed, MSG_NOSIGNAL);
-            if (bytes_actually_sent == -1)
+            ssize_t bytes_actually_sent = send(client_fd, file_buffer, readed, MSG_NOSIGNAL);
+            if (bytes_actually_sent == -1) {
+                close(static_file_fd);
+                static_file_fd = -1;
                 return (false);
+            }
             else if (bytes_actually_sent > 0)
             {
                 this->save_bytes_sent(this->bytes_sent + bytes_actually_sent);
                 
-                // >> final_raw_response -> header place holder
                 if (off_t(this->bytes_sent - final_raw_response.size()) >= this->file_size) {
                     close(static_file_fd);
+                    static_file_fd = -1;
                     return (true);
                 }
             }
         }
         else if (readed == 0) {
             close(static_file_fd);
+            static_file_fd = -1;
             return (true);
         }
     }

@@ -58,8 +58,7 @@ class response
         void    set_raw_response(std::string &raw_res);
         void    set_file_size(off_t file_size);
         void    save_bytes_sent(off_t bytes_sent);
-        bool    stream_response_to_client(int fd);
-
+        bool    stream_response_to_client(int client_fd);
 
         // >> getters
         std::string         get_str_stat_code(unsigned short int code) const;
