@@ -79,6 +79,10 @@ void socket_engine::terminate_client(int fd, std::string stat)
             ++it_w;
     }
 
+    int file_fd = raw_client_data[fd].res.get_static_file_fd();
+    if (file_fd != -1)
+        close(file_fd);
+
     this->raw_client_data.erase(fd);
     remove_fd_from_list(fd);
     close(fd);
