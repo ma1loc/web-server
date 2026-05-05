@@ -1,6 +1,4 @@
-# WEBSERV
-
-*This project has been created as part of the 42 curriculum by [abenzaho], [yanflous], and [ybenchel].*
+*This project has been created as part of the 1337/42 curriculum by [@me](https://github.com/ma1loc), [@BusCops](https://github.com/BusCops) and [@YbencheL](https://github.com/YbencheL).*
 
 ## Description
 
@@ -14,9 +12,54 @@ HTTP is a stateless protocol, meaning that each request is independent and the c
 
 In HTTP, client interactions are performed using methods such as GET, POST, DELETE, etc. Each request sent by the client is processed by the server, which then returns a response.
 
-As for HTTP response it is mainly composed of two parts:
+As for the HTTP response, it is mainly composed of two parts:
 - A status code (indicating the result of the request)
 - A body (the data returned to the client)
+
+## How my HTTP Server works:
+
+<img width="1716" height="820" alt="Screenshot From 2026-05-02 11-15-45" src="https://github.com/user-attachments/assets/6ce258ab-8447-42c2-9395-9cf73a89d6c3" />
+
+<img width="995" height="952" alt="Screenshot From 2026-05-02 11-16-13" src="https://github.com/user-attachments/assets/0e28919a-3523-4f84-8b14-76f2eea6cb92" />
+
+<img width="1032" height="480" alt="Screenshot From 2026-05-02 11-17-55" src="https://github.com/user-attachments/assets/c3b78614-f4e7-40d2-a357-2d55e0410897" />
+
+<img width="1120" height="586" alt="Screenshot From 2026-05-02 11-18-08" src="https://github.com/user-attachments/assets/52b13926-61cd-4c24-ade9-4f2bb166529f" />
+
+<img width="1070" height="905" alt="Screenshot From 2026-05-02 11-17-41" src="https://github.com/user-attachments/assets/49683b4f-9725-4d8e-9dde-6ea4391b981f" />
+
+<img width="1709" height="461" alt="Screenshot From 2026-05-02 11-18-35" src="https://github.com/user-attachments/assets/bfc0776b-316c-4e65-b700-8ae060d14828" />
+
+<img width="1788" height="538" alt="Screenshot From 2026-05-02 11-18-49" src="https://github.com/user-attachments/assets/0b70c12e-3694-4d62-ab72-4b11fe0ece59" />
+
+
+<img width="1641" height="952" alt="Screenshot From 2026-05-02 11-16-55" src="https://github.com/user-attachments/assets/75ee9040-54d2-42bf-aa0a-0fa7402437c8" />
+
+
+<img width="1070" height="540" alt="Screenshot From 2026-05-02 11-17-18" src="https://github.com/user-attachments/assets/fe15f8be-ee39-4fa8-a3f6-0047d0234411" />
+
+FOR more details, check my Medium [here](https://medium.com/p/d78223b4573a/edit)
+
+
+
+## What [@me](https://github.com/ma1loc) built:
+- Multiplier management  
+- Validation of config file data after parsing  
+- Request validation  
+- Full HTTP response construction  
+- Request routing  
+- Methods (GET, POST, DELETE)  
+- Dynamic HTML generation based on error status codes  
+- Autoindex navigation page  
+- Testing
+
+## What [@BusCops](https://github.com/BusCops) built:
+- Parsing requests coming from the client browser  
+- CGI I/O handling  
+
+## What [@YbencheL](https://github.com/YbencheL) built:
+- Config file parsing  
+- Cookies and session management  
 
 ## Instructions
 
