@@ -2,7 +2,7 @@
 #include "../../utils/utils.hpp"
 #include "../includes/parseRequest.hpp"
 #include "../includes/request.hpp"
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
 void UpperCaseHeaderName(std::string &name)
 {

@@ -109,3 +109,63 @@ Additionally, AI was used for:
 - Assisting with grammar and wording improvements in this README
 
 AI used as a support tool to enhance understanding and improve documentation quality.
+
+---
+
+## 🧪 Testing
+
+### Local Stress Test
+
+> `./stress-test`
+
+| #  | Method | URL | Notes |
+|----|--------|-----|-------|
+| 1  | `GET`  | `http://localhost:8080/` | |
+| 2  | `POST` | `http://localhost:8080/` | Body size: `0` |
+| 3  | `HEAD` | `http://localhost:8080/` | |
+| 4  | `GET`  | `http://localhost:8080/directory` | |
+| 5  | `GET`  | `http://localhost:8080/directory/youpi.bad_extension` | |
+| 6  | `GET`  | `http://localhost:8080/directory/youpi.bla` | |
+| 7  | `GET`  | `http://localhost:8080/directory/oulalala` | Expected `404` |
+| 8  | `GET`  | `http://localhost:8080/directory/nop` | |
+| 9  | `GET`  | `http://localhost:8080/directory/nop/` | |
+| 10 | `GET`  | `http://localhost:8080/directory/nop/other.pouic` | |
+| 11 | `GET`  | `http://localhost:8080/directory/nop/other.pouac` | Expected `404` |
+| 12 | `GET`  | `http://localhost:8080/directory/Yeah` | Expected `404` |
+| 13 | `GET`  | `http://localhost:8080/directory/Yeah/not_happy.bad_extension` | |
+| 14 | `POST` | `http://localhost:8080/directory/youpi.bla` | Body size: `100,000,000` |
+| 15 | `POST` | `http://localhost:8080/directory/youpla.bla` | Body size: `100,000,000` |
+| 16 | `POST` | `http://localhost:8080/directory/youpi.bla` | Body size: `100,000` · Special headers |
+| 17 | `POST` | `http://localhost:8080/post_body` | Body size: `0` |
+| 18 | `POST` | `http://localhost:8080/post_body` | Body size: `100` |
+| 19 | `POST` | `http://localhost:8080/post_body` | Body size: `200` |
+| 20 | `POST` | `http://localhost:8080/post_body` | Body size: `101` |
+| 21 | `GET`  | `/` | `5` workers × `15` requests |
+| 22 | `GET`  | `/` | `20` workers × `5,000` requests |
+| 23 | `GET`  | `/directory/nop` | `128` workers × `50` requests |
+| 24 | `POST` | `/directory/youpi.bla` | `20` workers × `5` requests · Body size: `100,000,000` |
+
+✅ **All tests passed!**
+
+---
+
+### Siege Benchmark
+
+> `siege -c 255 -t 1s http://localhost:8080`
+
+| Metric | Result |
+|--------|--------|
+| **Availability** | `100.00%` |
+| **Transactions** | `7,332 hits` |
+| **Elapsed Time** | `1.97 s` |
+| **Data Transferred** | `183.52 MB` |
+| **Response Time** | `64.44 ms` |
+| **Transaction Rate** | `3,721.83 trans/sec` |
+| **Throughput** | `93.16 MB/sec` |
+| **Concurrency** | `239.85` |
+| **Successful Transactions** | `7,332` |
+| **Failed Transactions** | `0` |
+| **Longest Transaction** | `320.00 ms` |
+| **Shortest Transaction** | `0.00 ms` |
+
+> Tested with **255 concurrent users** over **1 second** — zero failures recorded.
